@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">ミニッツリピーター</string>
+
+    <string name="switch_RepeaterByTime">リピーターを鳴らす</string>
+    <string name="text_RepeaterInterval">リピーターを鳴らす間隔</string>
+
+    <string name="radioButton_Interval2">2分</string>
+    <string name="radioButton_Interval3">3分</string>
+    <string name="radioButton_Interval4">4分</string>
+    <string name="radioButton_Interval5">5分</string>
+    <string name="radioButton_Interval6">6分</string>
+    <string name="radioButton_Interval10">10分</string>
+    <string name="radioButton_Interval12">12分</string>
+    <string name="radioButton_Interval15">15分</string>
+    <string name="radioButton_Interva20">20分</string>
+    <string name="radioButton_Interva30">30分</string>
+    <string name="radioButton_Interva60">60分</string>
+
+    <string name="checkBox_Time1">時間帯1を使用する</string>
+    <string name="checkBox_Time2">時間帯2を使用する</string>
+
+    <string name="button_StartTime1">開始時刻1</string>
+    <string name="button_StartTime2">開始時刻2</string>
+    <string name="button_EndTime1">終了時刻1</string>
+    <string name="button_EndTime2">終了時刻2</string>
+
+    <string name="textView_StartTime1">00:00</string>
+    <string name="textView_StartTime2">12:00</string>
+    <string name="textView_EndTime1">11:59</string>
+    <string name="textView_EndTime2">23:59</string>
+</resources>
