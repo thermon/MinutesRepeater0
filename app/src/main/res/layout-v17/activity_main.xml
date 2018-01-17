@@ -284,5 +284,4 @@
        app:layout_constraintStart_toStartOf="parent"
        app:layout_constraintTop_toBottomOf="@+id/button_StartTime2" />
 
-
 </android.support.constraint.ConstraintLayout>
