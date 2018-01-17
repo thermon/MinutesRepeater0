@@ -12,9 +12,9 @@
     <string name="radioButton_Interval10">10分</string>
     <string name="radioButton_Interval12">12分</string>
     <string name="radioButton_Interval15">15分</string>
-    <string name="radioButton_Interva20">20分</string>
-    <string name="radioButton_Interva30">30分</string>
-    <string name="radioButton_Interva60">60分</string>
+    <string name="radioButton_Interval20">20分</string>
+    <string name="radioButton_Interval30">30分</string>
+    <string name="radioButton_Interval60">60分</string>
 
     <string name="checkBox_Time1">時間帯1を使用する</string>
     <string name="checkBox_Time2">時間帯2を使用する</string>
