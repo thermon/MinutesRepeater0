@@ -30,4 +30,5 @@
     <string name="textView_EndTime2">23:59</string>
 
     <string name="button_SoundTest">現在時刻で鳴らしてみる</string>
+    <string name="checkbox_ReferencedToTheHour">正時を基準にする</string>
 </resources>
