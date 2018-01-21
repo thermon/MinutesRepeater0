@@ -29,6 +29,10 @@
     <string name="textView_EndTime1">11:59</string>
     <string name="textView_EndTime2">23:59</string>
 
-    <string name="button_SoundTest">現在時刻で鳴らしてみる</string>
+    <string name="button_SoundTest">現在時刻で試す</string>
     <string name="checkbox_ReferencedToTheHour">正時を基準にする</string>
+    <string name="textView_NextTimeText">次回鳴動時刻</string>
+    <string name="textView_NowTime">未設定</string>
+    <string name="textView_NextTime">未設定</string>
+    <string name="textView_NowTimeText">現在時刻</string>
 </resources>

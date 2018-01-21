@@ -6,324 +6,201 @@
     android:layout_height="match_parent"
     tools:context="com.example.therm.MainActivity">
 
-   <Switch
-       android:id="@+id/switch_RepeaterByTime"
+   <CheckBox
+       android:id="@+id/ReferencedToTheHour"
        android:layout_width="0dp"
        android:layout_height="wrap_content"
+       android:layout_columnSpan="5"
+       android:layout_marginLeft="16dp"
+       android:layout_marginStart="16dp"
+       android:layout_marginTop="8dp"
+       android:text="@string/checkbox_ReferencedToTheHour"
+       app:layout_constraintLeft_toLeftOf="parent"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintTop_toBottomOf="@+id/timezones" />
+
+   <GridLayout
+       android:id="@+id/trial"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_marginBottom="16dp"
        android:layout_marginEnd="8dp"
        android:layout_marginStart="8dp"
        android:layout_marginTop="16dp"
-       android:text="@string/switch_RepeaterByTime"
-       android:textAlignment="center"
-       android:textSize="18sp"
+       android:columnCount="3"
+       android:rowCount="2"
+       app:layout_constraintBottom_toBottomOf="parent"
        app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintHorizontal_bias="0.0"
        app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toTopOf="parent" />
+       app:layout_constraintTop_toBottomOf="@+id/ReferencedToTheHour">
 
-   <RadioButton
-       android:id="@+id/radioButton_Interval2"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="8dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval2"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval3"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/text_RepeaterInterval"
-       android:layout_marginLeft="8dp" />
+      <TextView
+          android:id="@+id/textView3"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/textView_NextTimeText"
+          android:textSize="14sp"
+          android:textStyle="bold" />
 
-   <RadioButton
-       android:id="@+id/radioButton_Interval3"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval3"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval4"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval2"
-       app:layout_constraintTop_toBottomOf="@+id/text_RepeaterInterval"
-       android:layout_marginLeft="4dp" />
+      <TextView
+          android:id="@+id/textView"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:paddingLeft="4dp"
+          android:paddingRight="4dp"
+          android:text="@string/textView_NextTime"
+          android:textSize="24sp"
+          android:textStyle="bold" />
 
-   <RadioButton
-       android:id="@+id/radioButton_Interval4"
-       android:layout_width="0dp"
-       android:layout_height="32dp"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval4"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval5"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval3"
-       app:layout_constraintTop_toBottomOf="@+id/text_RepeaterInterval"
-       android:layout_marginLeft="4dp" />
+      <Button
+          android:id="@+id/button"
+          android:layout_width="wrap_content"
+          android:layout_height="match_parent"
+          android:layout_rowSpan="2"
+          android:text="@string/button_SoundTest" />
 
-   <RadioButton
-       android:id="@+id/radioButton_Interval5"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval5"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval6"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval4"
-       app:layout_constraintTop_toBottomOf="@+id/text_RepeaterInterval"
-       android:layout_marginLeft="4dp" />
+      <TextView
+          android:id="@+id/textView4"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/textView_NowTimeText"
+          android:textSize="14sp"
+          android:textStyle="bold" />
 
-   <RadioButton
-       android:id="@+id/radioButton_Interval6"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="8dp"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval6"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval5"
-       app:layout_constraintTop_toBottomOf="@+id/text_RepeaterInterval"
-       android:layout_marginRight="8dp"
-       android:layout_marginLeft="4dp" />
+      <TextView
+          android:id="@+id/textView2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:paddingLeft="4dp"
+          android:paddingRight="4dp"
+          android:text="@string/textView_NowTime"
+          android:textSize="24sp"
+          android:textStyle="bold" />
 
-   <RadioButton
-       android:id="@+id/radioButton_Interval10"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="8dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval10"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval12"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/radioButton_Interval2"
-       android:layout_marginLeft="8dp" />
-
-   <RadioButton
-       android:id="@+id/radioButton_Interval12"
-       android:layout_width="0dp"
-       android:layout_height="32dp"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval12"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval15"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval10"
-       app:layout_constraintTop_toBottomOf="@+id/radioButton_Interval3"
-       android:layout_marginLeft="4dp" />
-
-   <RadioButton
-       android:id="@+id/radioButton_Interval15"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval15"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval20"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval12"
-       app:layout_constraintTop_toBottomOf="@+id/radioButton_Interval4"
-       android:layout_marginLeft="4dp" />
-
-   <RadioButton
-       android:id="@+id/radioButton_Interval20"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval20"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toStartOf="@+id/radioButton_Interval30"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval15"
-       app:layout_constraintTop_toBottomOf="@+id/radioButton_Interval5"
-       android:layout_marginLeft="4dp" />
-
-   <RadioButton
-       android:id="@+id/radioButton_Interval30"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="8dp"
-       android:layout_marginStart="4dp"
-       android:layout_marginTop="8dp"
-       android:text="@string/radioButton_Interval30"
-       android:textSize="12sp"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintStart_toEndOf="@+id/radioButton_Interval20"
-       app:layout_constraintTop_toBottomOf="@+id/radioButton_Interval6"
-       android:layout_marginRight="8dp"
-       android:layout_marginLeft="4dp" />
+   </GridLayout>
 
    <TextView
-       android:id="@+id/text_RepeaterInterval"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="8dp"
-       android:layout_marginStart="8dp"
-       android:layout_marginTop="24dp"
-       android:text="@string/text_RepeaterInterval"
-       android:textAlignment="center"
-       android:textSize="18sp"
-       android:visibility="visible"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintHorizontal_bias="0.0"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/textView_EndTime2" />
-
-   <TextView
-       android:id="@+id/textView_StartTime1"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="16dp"
-       android:text="@string/textView_StartTime1"
-       android:textSize="30sp"
-       android:textStyle="bold"
-       app:layout_constraintEnd_toStartOf="@+id/button_EndTime1"
-       app:layout_constraintStart_toEndOf="@+id/button_StartTime1"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time1"
-       android:layout_marginRight="16dp" />
-
-   <TextView
-       android:id="@+id/textView_StartTime2"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="16dp"
-       android:text="@string/textView_StartTime2"
-       android:textSize="30sp"
-       android:textStyle="bold"
-       app:layout_constraintEnd_toStartOf="@+id/button_EndTime2"
-       app:layout_constraintStart_toEndOf="@+id/button_StartTime2"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time2"
-       android:layout_marginRight="16dp" />
-
-   <TextView
-       android:id="@+id/textView_EndTime2"
+       android:id="@+id/textView00"
        android:layout_width="wrap_content"
        android:layout_height="wrap_content"
        android:layout_marginEnd="8dp"
-       android:text="@string/textView_EndTime2"
-       android:textSize="30sp"
-       android:textStyle="bold"
+       android:layout_marginStart="8dp"
+       android:text="TextView"
        app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintStart_toEndOf="@+id/button_EndTime2"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time2"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintTop_toBottomOf="@+id/trial" />
+
+   <NumberPicker
+       android:id="@+id/intervalTime"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_marginEnd="8dp"
+       android:layout_marginTop="8dp"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintTop_toBottomOf="@+id/textView10"
        android:layout_marginRight="8dp" />
 
-   <CheckBox
-       android:id="@+id/checkBox_Time1"
-       android:layout_width="0dp"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="8dp"
-       android:layout_marginStart="8dp"
-       android:layout_marginTop="24dp"
-       android:text="@string/checkBox_Time1"
-       android:textAlignment="center"
-       android:textSize="18sp"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintHorizontal_bias="0.0"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/switch_RepeaterByTime" />
-
-   <CheckBox
-       android:id="@+id/checkBox_Time2"
-       android:layout_width="0dp"
-       android:layout_height="38dp"
-       android:layout_marginEnd="8dp"
-       android:layout_marginStart="8dp"
-       android:layout_marginTop="24dp"
-       android:text="@string/checkBox_Time2"
-       android:textAlignment="center"
-       android:textSize="18sp"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintHorizontal_bias="1.0"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/textView_StartTime1" />
-
-   <Button
-       android:id="@+id/button_StartTime1"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="8dp"
-       android:text="@string/button_StartTime1"
-       android:textSize="14sp"
-       app:layout_constraintEnd_toStartOf="@+id/textView_StartTime1"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time1"
-       android:layout_marginLeft="8dp" />
-
-   <Button
-       android:id="@+id/button_EndTime1"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="8dp"
-       android:text="@string/button_EndTime1"
-       android:textSize="14sp"
-       app:layout_constraintEnd_toStartOf="@+id/textView_EndTime1"
-       app:layout_constraintStart_toEndOf="@+id/textView_StartTime1"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time1"
-       android:layout_marginLeft="8dp" />
-
    <TextView
-       android:id="@+id/textView_EndTime1"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="8dp"
-       android:text="@string/textView_EndTime1"
-       android:textSize="30sp"
-       android:textStyle="bold"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintStart_toEndOf="@+id/button_EndTime1"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time1"
-       tools:ignore="RtlCompat" />
-
-   <Button
-       android:id="@+id/button_StartTime2"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="8dp"
-       android:text="@string/button_StartTime2"
-       android:textSize="14sp"
-       app:layout_constraintEnd_toStartOf="@+id/textView_StartTime2"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time2"
-       android:layout_marginLeft="8dp" />
-
-   <Button
-       android:id="@+id/button_EndTime2"
-       android:layout_width="wrap_content"
+       android:id="@+id/textView10"
+       android:layout_width="84dp"
        android:layout_height="0dp"
-       android:layout_marginStart="8dp"
-       android:text="@string/button_EndTime2"
-       android:textSize="14sp"
-       app:layout_constraintEnd_toStartOf="@+id/textView_EndTime2"
-       app:layout_constraintStart_toEndOf="@+id/textView_StartTime2"
-       app:layout_constraintTop_toBottomOf="@+id/checkBox_Time2"
-       android:layout_marginLeft="8dp" />
+       android:layout_columnSpan="5"
+       android:layout_marginEnd="8dp"
+       android:layout_marginTop="16dp"
+       android:text="@string/text_RepeaterInterval"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintTop_toTopOf="parent"
+       android:layout_marginRight="8dp" />
 
-   <CheckBox
-       android:id="@+id/checkbox_ReferencedToTheHour"
+   <GridLayout
+       android:id="@+id/timezones"
        android:layout_width="0dp"
        android:layout_height="wrap_content"
        android:layout_marginEnd="8dp"
        android:layout_marginStart="8dp"
        android:layout_marginTop="8dp"
-       android:text="@string/checkbox_ReferencedToTheHour"
-       android:textAlignment="center"
-       android:textSize="18sp"
-       app:layout_constraintEnd_toEndOf="parent"
+       android:columnCount="2"
+       android:rowCount="7"
+       app:layout_constraintEnd_toStartOf="@+id/textView10"
        app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/radioButton_Interval10" />
+       app:layout_constraintTop_toTopOf="parent">
 
-   <Button
-       android:id="@+id/button_SoundTest"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginStart="8dp"
-       android:layout_marginTop="24dp"
-       android:text="@string/button_SoundTest"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/checkbox_ReferencedToTheHour"
-       android:layout_marginLeft="8dp" />
+      <Switch
+          android:id="@+id/switch1"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_columnSpan="2"
+          android:text="@string/switch_RepeaterByTime" />
+
+      <CheckBox
+          android:id="@+id/checkBox2"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_columnSpan="2"
+          android:text="@string/checkBox_Time1" />
+
+      <Button
+          android:id="@+id/button2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/button_StartTime1" />
+
+      <TextView
+          android:id="@+id/textView6"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/textView_StartTime1"
+          android:textSize="24sp"
+          android:textStyle="bold" />
+
+      <Button
+          android:id="@+id/button3"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/button_EndTime1" />
+
+      <TextView
+          android:id="@+id/textView7"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/textView_EndTime1"
+          android:textSize="24sp"
+          android:textStyle="bold" />
+
+      <CheckBox
+          android:id="@+id/checkBox3"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_columnSpan="2"
+          android:text="@string/checkBox_Time2" />
+
+      <Button
+          android:id="@+id/button4"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/button_StartTime1" />
+
+      <TextView
+          android:id="@+id/textView8"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/textView_StartTime2"
+          android:textSize="24sp"
+          android:textStyle="bold" />
+
+      <Button
+          android:id="@+id/button5"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/button_EndTime2" />
+
+      <TextView
+          android:id="@+id/textView9"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/textView_EndTime2"
+          android:textSize="24sp"
+          android:textStyle="bold" />
+   </GridLayout>
 
 </android.support.constraint.ConstraintLayout>
