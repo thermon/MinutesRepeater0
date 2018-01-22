@@ -2,7 +2,7 @@
     <string name="app_name">ミニッツリピーター</string>
 
     <string name="switch_RepeaterByTime">一定時間ごとにリピーターを鳴らす</string>
-    <string name="text_RepeaterInterval">リピーターを鳴らす間隔</string>
+    <string name="text_RepeaterInterval">リピーターを鳴らす間隔(分)</string>
 
     <string name="radioButton_Interval2">2分</string>
     <string name="radioButton_Interval3">3分</string>
@@ -29,7 +29,7 @@
     <string name="textView_EndTime1">11:59</string>
     <string name="textView_EndTime2">23:59</string>
 
-    <string name="button_SoundTest">現在時刻で試す</string>
+    <string name="button_SoundTest">現在時刻</string>
     <string name="checkbox_ReferencedToTheHour">正時を基準にする</string>
     <string name="textView_NextTimeText">次回鳴動時刻</string>
     <string name="textView_NowTime">未設定</string>
