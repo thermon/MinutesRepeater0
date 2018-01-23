@@ -1,8 +1,13 @@
 package com.example.therm;
 
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -19,6 +24,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import static com.example.therm.R.id.intervalSeekBar;
 import static com.example.therm.R.id.nowTime;
@@ -39,6 +45,10 @@ public class MainActivity  extends AppCompatActivity {
     public final int intervalMax[]={60,intervalList[intervalList.length-1]};
     public final int intervalMin[]={2,intervalList[0]};
 
+    // 音関係の変数
+    public SoundPool SoundsPool;
+    public final  String soundName[]={"hour","min15","min1"};
+    public int soundId[]=new int[soundName.length];
 
     // 時刻表示のフォーマット
     final SimpleDateFormat mSimpleDataFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
@@ -69,7 +79,6 @@ public class MainActivity  extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 intervalSwitchChange(-1);
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
@@ -83,6 +92,50 @@ public class MainActivity  extends AppCompatActivity {
 
         findViewById(R.id.intervalDecrease).setOnClickListener(intervalButton);
         findViewById(R.id.intervalIncrease).setOnClickListener(intervalButton);
+
+        // 音読み込み
+         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+
+             //ロリポップより前のバージョンに対応するコード
+             SoundsPool = new SoundPool(soundName.length, AudioManager.STREAM_ALARM, 0);
+/*
+             for (int i=0;i<soundName.length;i++) {
+                 soundId[i] = SoundsPool.load(getBaseContext(), getResources().getIdentifier(soundName[i], "raw", getPackageName()), 1);
+             }
+             */
+         } else {
+             AudioAttributes attr = new AudioAttributes.Builder()
+                     .setUsage(AudioAttributes.USAGE_MEDIA)
+                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                     .build();
+
+             SoundsPool = new SoundPool.Builder()
+                     .setAudioAttributes(attr)
+                     .setMaxStreams(soundName.length)
+                     .build();
+         }
+         SoundsPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
+             @Override
+             public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+                 Log.d("debug","sampleId="+sampleId);
+                 Log.d("debug","status="+status);
+             }
+         });
+         //あらかじめ音をロードする必要がある　※直前にロードしても間に合わないので早めに
+         for (int i=0;i<soundName.length;i++) {
+             soundId[i] = SoundsPool.load(getBaseContext(),
+                     getResources().getIdentifier(soundName[i], "raw", getPackageName()),
+                     1);
+         }
+
+         //現在時刻鳴動
+         Button nowTimeButton=findViewById(R.id.nowTimeButton);
+         nowTimeButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View view) {
+                 soundTime();
+              }
+         });
 
         // 現在時刻表示
         mHandler = new Handler(getMainLooper());
@@ -191,6 +244,55 @@ public class MainActivity  extends AppCompatActivity {
 
         String time = String.format(Locale.US,"%1$02d:%2$02d", hour,minute);
         ((TextView)findViewById(R.id.nextTime)).setText(time);
+    }
+    public void soundTime() {
+        Calendar cal = Calendar.getInstance();
+        int hour=cal.get(Calendar.HOUR_OF_DAY);
+        int minute=cal.get(Calendar.MINUTE);
+        int minuteDivide=15;
+        int min_1=minute % minuteDivide;
+        int min_15=(minute -min_1) / minuteDivide;
 
+        if (hour>12) hour -=12;
+        if (hour == 0) hour=12;
+
+        for (int i=0;i<hour;i++) {
+            SoundsPool.play(soundId[0],1.0f,1.0f,0,0,1.0f);
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            TimeUnit.MILLISECONDS.sleep(200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (min_15>0) {
+            for (int i=0;i<min_15;i++) {
+                SoundsPool.play(soundId[1],1.0f,1.0f,0,0,1.0f);
+                try {
+                    TimeUnit.MILLISECONDS.sleep(800);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        try {
+            TimeUnit.MILLISECONDS.sleep(400);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (min_1>0) {
+            for (int i=0;i<min_1;i++) {
+                SoundsPool.play(soundId[2],1.0f,1.0f,0,0,1.0f);
+                try {
+                    TimeUnit.MILLISECONDS.sleep(400);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
