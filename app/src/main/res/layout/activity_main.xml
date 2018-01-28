@@ -7,7 +7,7 @@
     tools:context="com.example.therm.MainActivity">
 
    <Switch
-       android:id="@+id/switch1"
+       android:id="@+id/repeaterEnable"
        android:layout_width="wrap_content"
        android:layout_height="wrap_content"
        android:layout_columnSpan="2"
@@ -32,7 +32,7 @@
        android:text="@string/textView_NowTime"
        android:textSize="24sp"
        android:textStyle="bold"
-       app:layout_constraintBottom_toTopOf="@+id/switch1"
+       app:layout_constraintBottom_toTopOf="@+id/repeaterEnable"
        app:layout_constraintEnd_toEndOf="parent"
        app:layout_constraintStart_toEndOf="@+id/nowTimeButton"
        app:layout_constraintTop_toTopOf="parent"
@@ -159,10 +159,10 @@
        android:rowCount="7"
        app:layout_constraintEnd_toEndOf="parent"
        app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/switch1">
+       app:layout_constraintTop_toBottomOf="@+id/repeaterEnable">
 
       <CheckBox
-          android:id="@+id/TimeZone1"
+          android:id="@+id/TimeZone1_Enable"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_columnSpan="4"
@@ -197,7 +197,7 @@
           android:textStyle="bold" />
 
       <CheckBox
-          android:id="@+id/TimeZone2"
+          android:id="@+id/TimeZone2_Enable"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_columnSpan="4"

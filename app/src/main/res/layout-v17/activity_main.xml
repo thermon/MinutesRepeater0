@@ -7,7 +7,7 @@
     tools:context="com.example.therm.MainActivity">
 
    <Switch
-       android:id="@+id/switch1"
+       android:id="@+id/repeaterEnable"
        android:layout_width="wrap_content"
        android:layout_height="wrap_content"
        android:layout_columnSpan="2"
@@ -32,7 +32,7 @@
        android:text="@string/textView_NowTime"
        android:textSize="24sp"
        android:textStyle="bold"
-       app:layout_constraintBottom_toTopOf="@+id/switch1"
+       app:layout_constraintBottom_toTopOf="@+id/repeaterEnable"
        app:layout_constraintEnd_toEndOf="parent"
        app:layout_constraintStart_toEndOf="@+id/nowTimeButton"
        app:layout_constraintTop_toTopOf="parent"/>
@@ -58,7 +58,7 @@
        android:layout_height="wrap_content"
        android:layout_marginEnd="16dp"
        android:layout_marginStart="8dp"
-       android:layout_marginTop="16dp"
+       android:layout_marginTop="8dp"
        android:gravity="center_horizontal"
        android:paddingLeft="4dp"
        android:paddingRight="4dp"
@@ -68,7 +68,7 @@
        android:visibility="visible"
        app:layout_constraintEnd_toEndOf="parent"
        app:layout_constraintStart_toEndOf="@+id/textView2"
-       app:layout_constraintTop_toBottomOf="@+id/intervalSeekBar"/>
+       app:layout_constraintTop_toBottomOf="@+id/intervalSeekBar" />
 
    <CheckBox
        android:id="@+id/ReferencedToTheHour"
@@ -85,7 +85,7 @@
        android:layout_height="wrap_content"
        android:layout_marginEnd="8dp"
        android:layout_marginStart="32dp"
-       android:layout_marginTop="24dp"
+       android:layout_marginTop="16dp"
        android:text="@string/textView_NextTimeText"
        android:textSize="14sp"
        android:textStyle="bold"
@@ -93,7 +93,7 @@
        app:layout_constraintEnd_toStartOf="@+id/nextTime"
        app:layout_constraintLeft_toLeftOf="parent"
        app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/intervalSeekBar"/>
+       app:layout_constraintTop_toBottomOf="@+id/intervalSeekBar" />
 
    <SeekBar
        android:id="@+id/intervalSeekBar"
@@ -141,17 +141,18 @@
    <GridLayout
        android:id="@+id/timezones"
        android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginEnd="16dp"
-       android:layout_marginStart="16dp"
+       android:layout_height="0dp"
+       android:layout_marginTop="8dp"
        android:columnCount="4"
        android:rowCount="7"
        app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintLeft_toLeftOf="parent"
+       app:layout_constraintRight_toRightOf="parent"
        app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toBottomOf="@+id/switch1">
+       app:layout_constraintTop_toBottomOf="@+id/seekBar">
 
       <CheckBox
-          android:id="@+id/TimeZone1"
+          android:id="@+id/TimeZone1_Enable"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_columnSpan="4"
@@ -186,7 +187,7 @@
           android:textStyle="bold" />
 
       <CheckBox
-          android:id="@+id/TimeZone2"
+          android:id="@+id/TimeZone2_Enable"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_columnSpan="4"
@@ -259,5 +260,58 @@
           tools:layout_editor_absoluteY="319dp" />
 
    </LinearLayout>
+
+   <SeekBar
+       android:id="@+id/seekBar"
+       android:layout_width="0dp"
+       android:layout_height="wrap_content"
+       android:layout_marginEnd="8dp"
+       android:layout_marginStart="8dp"
+       android:layout_marginTop="8dp"
+       app:layout_constraintEnd_toStartOf="@+id/button2"
+       app:layout_constraintStart_toEndOf="@+id/button"
+       app:layout_constraintTop_toBottomOf="@+id/checkBox" />
+
+   <Button
+       android:id="@+id/button"
+       android:layout_width="32dp"
+       android:layout_height="40dp"
+       android:layout_marginEnd="8dp"
+       android:text="＜"
+       android:textSize="8sp"
+       app:layout_constraintEnd_toStartOf="@+id/timezones"
+       app:layout_constraintTop_toBottomOf="@+id/checkBox" />
+
+   <Button
+       android:id="@+id/button2"
+       android:layout_width="32dp"
+       android:layout_height="40dp"
+       android:layout_marginEnd="24dp"
+       android:layout_marginStart="8dp"
+       android:text="＞"
+       android:textSize="8sp"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintStart_toEndOf="@+id/seekBar"
+       app:layout_constraintTop_toBottomOf="@+id/checkBox" />
+
+   <CheckBox
+       android:id="@+id/checkBox"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_marginStart="16dp"
+       android:text="独立した音量を使う"
+       app:layout_constraintEnd_toStartOf="@+id/textView3"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintTop_toBottomOf="@+id/repeaterEnable" />
+
+   <TextView
+       android:id="@+id/textView3"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_marginStart="8dp"
+       android:layout_marginTop="8dp"
+       android:text="TextView"
+       app:layout_constraintStart_toEndOf="@+id/checkBox"
+       app:layout_constraintTop_toBottomOf="@+id/repeaterEnable" />
 
 </android.support.constraint.ConstraintLayout>
