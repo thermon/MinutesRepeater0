@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
@@ -371,6 +372,15 @@ public class MainActivity  extends AppCompatActivity {
             mTimer.cancel();
             mTimer = null;
         }
+        // 時間帯のどれかが有効の場合
+        Intent intent = new Intent(MainActivity.this,AlarmReceiver.class);
+        PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+
+        // アラーム設定
+        am = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (am!=null) {
+            am.cancel(sender);
+        }
     }
 
 
@@ -607,161 +617,148 @@ public class MainActivity  extends AppCompatActivity {
     }
 
 }
-class AlarmReceiver extends BroadcastReceiver {
+// ミニッツリピーター鳴動クラス
+class minutesRepeat extends Thread {
+    // 音関係の変数
+    private SoundPool SoundsPool;
+    private final int resId[][]= {
+            {R.raw.hour},
+            {R.raw.min15},
+            {R.raw.min1}
+    };
+    private int soundId[][] =new int [resId.length][];
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        // リピーター鳴動用インスタンス初期化
-        minutesRepeat repeater= new minutesRepeat(context);
-        repeater.run();
-        Log.d("AlarmReceiver", "Alarm Received! : " + intent.getIntExtra(Intent.EXTRA_ALARM_COUNT, 0));
-//        Intent intent1 = new Intent(context, MainActivity.nextTime.class);
-//        context.startActivity(intent1);
+    private int[][] ListofWaitList = new int [resId.length][];
 
-        // スクリーンオン
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "My Tag");
-        wl.acquire(20000);
-    }
-}
-    // ミニッツリピーター鳴動クラス
-    class minutesRepeat extends Thread {
-        // 音関係の変数
-        private SoundPool SoundsPool;
-        private final int resId[] = {R.raw.hour, R.raw.min1};
+    // コンストラクター
+    public minutesRepeat(Context context) {
 
-        private int soundId[][] = {new int[12+3],new int[14+3]};
-        private int soundCount[]={0,0};
+        for (int i=0;i<resId.length;i++) {
+            soundId[i]=new int[resId[i].length];
+            ListofWaitList[i]=new int [resId[i].length];
+        }
+        // 音読み込み
+        //ロリポップより前のバージョンに対応するコード
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            SoundsPool = new SoundPool(12+3+14+3, AudioManager.STREAM_ALARM, 0);
+        } else {
+            AudioAttributes attr = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
 
-        // コンストラクター
-        public minutesRepeat(Context mainActivity) {
-
-            // 音読み込み
-            //ロリポップより前のバージョンに対応するコード
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                SoundsPool = new SoundPool(12+3+14+3, AudioManager.STREAM_ALARM, 0);
-            } else {
-                AudioAttributes attr = new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build();
-
-                SoundsPool = new SoundPool.Builder()
-                        .setAudioAttributes(attr)
-                        .setMaxStreams(12+3+14+3)
-                        .build();
+            SoundsPool = new SoundPool.Builder()
+                    .setAudioAttributes(attr)
+                    .setMaxStreams(12+3+14+3)
+                    .build();
+        }
+        SoundsPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
+            @Override
+            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+                Log.d("debug", "sampleId=" + sampleId);
+                Log.d("debug", "status=" + status);
             }
-            SoundsPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
-                @Override
-                public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-                    Log.d("debug", "sampleId=" + sampleId);
-                    Log.d("debug", "status=" + status);
-                }
-            });
-            //あらかじめ音をロードする必要がある　※直前にロードしても間に合わないので早めに
+        });
+        //あらかじめ音をロードする必要がある　※直前にロードしても間に合わないので早めに
 
 
-            for (int i = 0; i < resId.length; i++) {
-                for (int j = 0; j < soundId[i].length; j++) {
-                    soundId[i][j] = SoundsPool.load(
-                           mainActivity,resId[i],1);
-                }
+        for (int i = 0; i < resId.length; i++) {
+            for (int j = 0; j < soundId[i].length; j++) {
+                int id=  SoundsPool.load(
+                      context,resId[i][j],1);
+                soundId[i][j]=id;
+            MediaPlayer mp=MediaPlayer.create(context,resId[i][j]);
+            ListofWaitList[i][j]=mp.getDuration();
+            mp.release();
             }
-
         }
 
-        private int[][] ListofsoundList = {
-                {0},        // 時を表す音
-                {1,0},      // 15分を表す音
-                {1}         // 1分を表す音
-        };
-        private int[][] ListofWaitList = {
-                {400, 300},
-                {400, 200, 400},
-                {400, 300}
-        };
+    }
 
-        // リピーター音を鳴らす処理
-        public void run() {
-            Calendar cal = Calendar.getInstance();
-            int hour = cal.get(Calendar.HOUR_OF_DAY);
-            int minute = cal.get(Calendar.MINUTE);
-            int minuteDivide = 15;
-            int min_1 = minute % minuteDivide;
-            int min_15 = (minute - min_1) / minuteDivide;
 
-            int min_1a = min_1 % 5;
-            int min_5 = (min_1 - min_1a) / 5;
+    // リピーター音を鳴らす処理
+    public void run() {
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        int minute = cal.get(Calendar.MINUTE);
+        int minuteDivide = 15;
+        int min_1 = minute % minuteDivide;
+        int min_15 = (minute - min_1) / minuteDivide;
 
-            hour%=12;
-            if (hour == 0) {
-                hour = 12;
+        hour%=12;
+        if (hour == 0) {
+            hour = 12;
+        }
+
+        int count[] = { hour, min_15, min_1}; // 鳴動回数
+
+        try {
+            TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (int k = 0; k < resId.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
+//            Log.d("debug", "k=" + k);
+
+            if (count[k] > 0) {   // カウントする場合
+                 // 鳴動前時間待ち
+                try {
+                    TimeUnit.MILLISECONDS.sleep(400);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+
+                }
+                ring(k, count[k]);
+/*
+                for (int i = 0; i < count[k]; i++) {  // リピート回数
+                    Log.d("debug", "i=" + i);
+                    if (i == 0) {
+
+                                try {
+                                    TimeUnit.MILLISECONDS.sleep(soundWait[0]);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                    }
+                    for (int j = 0; j < soundSeaquence.length; j++) {   //指定された音を指定された順番、ウェイトで鳴らす
+ //                       Log.d("debug", "j=" + j);
+
+
+                    }
+
+                }
+                */
             }
+        }
+    }
 
-            int count[] = { hour, min_15, min_1}; // 鳴動回数
-
-            try {
-                TimeUnit.MILLISECONDS.sleep(100);
+    // SoundPoolから音を鳴らし、waitミリ秒待つ
+    private void ring(final int sound, final int loop) {
+        if (soundId[sound].length ==1) {
+            SoundsPool.play(soundId[sound][0], 1.0f, 1.0f, 0, loop-1, 1.0f);
+             try {
+                TimeUnit.MILLISECONDS.sleep(ListofWaitList[sound][0]*loop+200);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            for (int k = 0; k < ListofsoundList.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
-                int soundSeaquence[] = ListofsoundList[k];
-                final int soundWait[] = ListofWaitList[k];
-    //            Log.d("debug", "k=" + k);
-
-                if (count[k] > 0) {   // カウントする場合
-                        /*
-                    // 鳴動前時間待ち
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(soundWait[0]);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-    */
-                    for (int i = 0; i < count[k]; i++) {  // リピート回数
-                        Log.d("debug", "i=" + i);
-                        if (i == 0) {
-
-                                    try {
-                                        TimeUnit.MILLISECONDS.sleep(soundWait[0]);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                        }
-                        for (int j = 0; j < soundSeaquence.length; j++) {   //指定された音を指定された順番、ウェイトで鳴らす
-     //                       Log.d("debug", "j=" + j);
-
-                            ring(soundSeaquence[j], soundWait[j + 1]);
-                        }
-                    }
-                    SoundsPool.autoPause();
-                }
-            }
-        }
-
-        // SoundPoolから音を鳴らし、waitミリ秒待つ
-        private void ring(final int sound, final int wait) {
-        //    int id=soundId[sound][soundCount[sound]];
-
-            int id=soundId[sound][soundCount[sound]];
-            Log.d("ring", "id=" + sound
-                     + " ,count="+(soundCount[sound])
-            );
-            SoundsPool.play(id, 1.0f, 1.0f, 0, 0, 1.0f);
-            if (wait > 0) {
+        } else {
+            if (loop>1) {
+                SoundsPool.play(soundId[sound][1], 1.0f, 1.0f, 0, loop-2, 1.0f);
                 try {
-                    TimeUnit.MILLISECONDS.sleep(wait);
+                    TimeUnit.MILLISECONDS.sleep(ListofWaitList[sound][1]*(loop-1));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            soundCount[sound]++;
-            while (soundCount[sound]>=soundId[sound].length) {
-                soundCount[sound]-=soundId[sound].length;
+            SoundsPool.play(soundId[sound][0], 1.0f, 1.0f, 0, 0, 1.0f);
+            try {
+                TimeUnit.MILLISECONDS.sleep(ListofWaitList[sound][0]+200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
         }
+
     }
+}
 
