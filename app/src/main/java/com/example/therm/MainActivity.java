@@ -2,16 +2,12 @@ package com.example.therm;
 
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.app.TimePickerDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -20,64 +16,42 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.IBinder;
-import android.os.Looper;
-import android.os.Parcelable;
-import android.os.PowerManager;
-import android.sax.StartElementListener;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.NumberPicker;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.io.Serializable;
-import java.nio.channels.SeekableByteChannel;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.therm.R.id.checkBox;
 import static com.example.therm.R.id.nowTime;
-import static com.example.therm.R.id.time;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 public class MainActivity  extends AppCompatActivity {
     public Timer mTimer;
+    public Timer mTimer2;
     public Handler mHandler;
-    public boolean AlarmServe = false;
 
     // 正時のときの鳴動間隔
     public final int intervalList[] = {2, 3, 4, 5, 6, 10, 12, 15, 20, 30};
     // 最長鳴動間隔
-    public final int intervalMax[] = {60, intervalList[intervalList.length - 1]};
     public final int intervalMin[] = {2, intervalList[0]};
-
+    public final int seekBarMax[] = {60-intervalMin[0], intervalList.length - 1};
 
     // 音関係の変数
     public minutesRepeat repeater;
@@ -89,12 +63,16 @@ public class MainActivity  extends AppCompatActivity {
     public AlarmManager am = null;
 
     // 時間帯
-    public boolean ZoneEnable[] = {false, false};
-    public int timeFieldId[] = {
+    private Calendar zones[][]=new Calendar[2][];
+    public int timeFieldId[][] = {
+        {
             R.id.TimeZone1_Start_Text,
-            R.id.TimeZone1_End_Text,
+            R.id.TimeZone1_End_Text
+        },
+        {
             R.id.TimeZone2_Start_Text,
             R.id.TImeZone2_End_Text
+        }
     };
     public int timeButtonId[] = {
             R.id.TimeZone1_Start,
@@ -102,7 +80,6 @@ public class MainActivity  extends AppCompatActivity {
             R.id.TimeZone2_Start,
             R.id.TImeZone2_End
     };
-    public int timeArray[] = {0, 0, 0, 0};
     public int seekBarProgress = 0;
     public int intervalMinutes = 2;
     public boolean BasedOnMinute_00 = false;
@@ -114,19 +91,25 @@ public class MainActivity  extends AppCompatActivity {
 
     private void getFieldValues() {
         // 時間帯チェックボックス
-        ZoneEnable[0] = ((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked();
-        ZoneEnable[1] = ((CheckBox) findViewById(R.id.TimeZone2_Enable)).isChecked();
+        zones[0]=((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked() ?
+            new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
+        zones[1]=((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked() ?
+                new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
 
         // 時間情報を取得
-        for (int i = 0; i < timeFieldId.length; i++) {
-            int id = timeFieldId[i];
-            TextView Field = findViewById(id);
-            try {
-                // TextViewから設定時刻の情報を取得
-                Date d = sd.parse((String) Field.getText());
-                timeArray[i] = d.getHours() * 60 + d.getMinutes();
-            } catch (ParseException e) {
-                e.printStackTrace();
+        for (int i = 0; i < zones.length; i++) {
+            if (zones[i] == null) continue;
+            for (int j = 0 ; j < 2; j++) {
+                int id = timeFieldId[i][j];
+                TextView Field = findViewById(id);
+                try {
+                    // TextViewから設定時刻の情報を取得
+                    Date d = sd.parse((String) Field.getText());
+                    zones[i][j].set(Calendar.HOUR_OF_DAY,d.getHours());
+                    zones[i][j].set(Calendar.MINUTE,d.getMinutes());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -143,18 +126,12 @@ public class MainActivity  extends AppCompatActivity {
         int unitTime;
         if (regulate) {
             // 鳴動時刻を00分基準とした場合
-            unitTime = seekBarProgress + intervalMin[1];
-            if (unitTime > intervalMax[1]) unitTime = intervalMax[1];
+            unitTime = intervalList[progress];
 
-            for (int i = 0; i < intervalList.length; i++) { // 分からintervalListのインデックスに変換
-                if (unitTime <= intervalList[i]) {
-                    unitTime = intervalList[i];
-                    break;
-                }
-            }
         } else {
-            unitTime = seekBarProgress + intervalMin[0];
+            unitTime = progress + intervalMin[0];
         }
+        Log.d("setIntervalValue",String.format("%1$d(%2$d)",progress,unitTime));
         ((TextView) findViewById(R.id.intervalNumber)).setText(String.valueOf(unitTime));
         intervalMinutes = unitTime;
     }
@@ -190,8 +167,10 @@ public class MainActivity  extends AppCompatActivity {
 
         //       intervalNum = findViewById(R.id.intervalNumber);
         Log.d("onCreate", "call AlarmSet()");
-        AlarmSet();
-
+        // リピーター鳴動用インスタンス初期化
+        repeater = new minutesRepeat(this);
+        Calendar n=repeater.getNextAlarmTime(zones,intervalMinutes,BasedOnMinute_00,Calendar.getInstance());
+        if (n!=null ) AlarmSet(n);
 
         // 正時基準かどうかの変更
         ((CheckBox) findViewById(R.id.ReferencedToTheHour)).setOnCheckedChangeListener(new CheckBox.OnCheckedChangeListener() {
@@ -207,12 +186,16 @@ public class MainActivity  extends AppCompatActivity {
                 // シークバー周りの情報を変更
                 if (b) {
                     unitTime = seekBarProgress + intervalMin[0];
-                    if (unitTime > intervalMax[1]) unitTime = intervalMax[1];
+                    if (unitTime > intervalList[seekBarMax[1]]) unitTime = intervalList[seekBarMax[1]];
 
                     for (int i = 0; i < intervalList.length; i++) { // 分からintervalListのインデックスに変換
                         if (unitTime <= intervalList[i]) {
                             intervalSeek.setProgress(i);
                             unitTime = intervalList[i];
+                            Log.d("basedOnHour",
+                                    String.format("%1$d(%2$d)->%3$d(%4$d)",
+                                            seekBarProgress,seekBarProgress+intervalMin[0],
+                                            i,intervalList[i]));
                             break;
                         }
                     }
@@ -220,12 +203,21 @@ public class MainActivity  extends AppCompatActivity {
 
                 } else {
                     unitTime = intervalList[seekBarProgress];
-                    intervalSeek.setMax(intervalMax[0] - intervalMin[0]);
+                    Log.d("basedOnHour",
+                    String.format("%1$d(%2$d)->%3$d(%4$d)",
+                        seekBarProgress,intervalList[seekBarProgress],
+                            unitTime - intervalMin[0],unitTime)
+                    );
+
+                    intervalSeek.setMax(seekBarMax[0]);
                     intervalSeek.setProgress(unitTime - intervalMin[0]);
+
+
                 }
                 intervalMinutes = unitTime;
                 Log.d("Ref", "call AlarmSet()");
-                AlarmSet();
+                Calendar n=repeater.getNextAlarmTime(zones,intervalMinutes,BasedOnMinute_00,Calendar.getInstance());
+                if (n!=null ) AlarmSet(n);
             }
         });
 
@@ -234,9 +226,11 @@ public class MainActivity  extends AppCompatActivity {
                 .setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                        Log.d("SeekBar", "Changed");
+                        Log.d("SeekBar", "Changed "+ seekBarProgress+" to "+i);
                         seekBarProgress = i;
                         setIntervalValue(i, BasedOnMinute_00);
+                        Calendar n=repeater.getNextAlarmTime(zones,intervalMinutes,BasedOnMinute_00,Calendar.getInstance());
+                        if (n!=null ) AlarmSet(n);
                     }
 
                     @Override
@@ -281,8 +275,7 @@ public class MainActivity  extends AppCompatActivity {
         // 先程作ったスレッドにRunnableを送りつけられるハンドルを作る
         repeaterHandler = new Handler(repeaterThread.getLooper());
 
-        // リピーター鳴動用インスタンス初期化
-        repeater = new minutesRepeat(this);
+
 
         //　現在時刻鳴動
         Button nowTimeButton = findViewById(R.id.nowTimeButton);
@@ -313,54 +306,6 @@ public class MainActivity  extends AppCompatActivity {
                 });
             }
         }, 0, 1000);
-        //リピーター有効化スイッチのリスナー設定
-        /*
-        Switch repeaterEnable = findViewById(R.id.repeaterEnable);
-        repeaterEnable.setOnCheckedChangeListener(new Switch.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                Log.d("TimeZone", compoundButton.getText() + ":" + (b ? "Enable" : "Disable"));
-
-                int id=compoundButton.getId();
-                switch (id) {
-                    case R.id.TimeZone1_Enable:
-                        ZoneEnable[0]=b;
-                        break;
-                    case R.id.TimeZone2_Enable:
-                        ZoneEnable[1]=b;
-                        break;
-                }
-
-                Log.d("TimeZone", "bx");
-                boolean Enable=false;
-                for  (int bx:new int [] {0,1}) {
-                    if (ZoneEnable[bx]) {
-                        Enable=true;
-                        Log.d("TimeZone", "bx=true");
-                        break;
-                    } else {
-                        Log.d("TimeZone", "bx=false");
-
-                    }
-                }
-
-                if (Enable) {
-                    Log.d("TimeZone", "true");
-                    // アラーム設定
-                    AlarmSet();
-                } else {
-                    // アラーム解除
-                    AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-                    if (am != null) {
-                        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
-                        PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-                        am.cancel(sender);
-                    }
-
-                }
-            }
-        });
-        */
     }
 
 
@@ -373,8 +318,8 @@ public class MainActivity  extends AppCompatActivity {
             mTimer = null;
         }
         // 時間帯のどれかが有効の場合
-        Intent intent = new Intent(MainActivity.this,AlarmReceiver.class);
-        PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+        Intent intent = new Intent(getApplication(),AlarmReceiver.class);
+        PendingIntent sender = PendingIntent.getBroadcast(getApplication(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         // アラーム設定
         am = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -395,6 +340,13 @@ public class MainActivity  extends AppCompatActivity {
             int hour1;
 //            minute1=time % 60;
 //            hour1= (time-minute1) /60;
+
+            final HashMap<Integer, int[]> TimeZoneButtonMap=new HashMap<>();
+            TimeZoneButtonMap.put(R.id.TimeZone1_Start, new int[]{0, 0});
+            TimeZoneButtonMap.put(R.id.TImeZone1_End  , new int[]{0, 1});
+            TimeZoneButtonMap.put(R.id.TimeZone2_Start, new int[]{1, 0});
+            TimeZoneButtonMap.put(R.id.TImeZone2_End   , new int[]{1, 1});
+
 
             final SparseIntArray TimeZoneMap = new SparseIntArray(4);
             TimeZoneMap.append(R.id.TimeZone1_Start, 0);
@@ -425,9 +377,17 @@ public class MainActivity  extends AppCompatActivity {
                             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                                 Log.d("timeChanged", String.format("%02d:%02d", hourOfDay, minute));
                                 field.setText(String.format("%02d:%02d", hourOfDay, minute));
-                                timeArray[TimeZoneMap.get(i)] = hourOfDay * 60 + minute;
-                                Log.d("Time", "call AlarmSet()");
-                                AlarmSet();
+                                int idxList[]=TimeZoneButtonMap.get(i);
+                                if (zones[idxList[0]]!= null) {
+                                    Calendar cal = Calendar.getInstance();
+                                    cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                    cal.set(Calendar.MINUTE, minute);
+                                    zones[idxList[0]][idxList[1]] = cal;
+                                }
+                                    Log.d("Time", "call AlarmSet()");
+                                    Calendar n = repeater.getNextAlarmTime(zones, intervalMinutes, BasedOnMinute_00, Calendar.getInstance());
+                                    if (n != null) AlarmSet(n);
+
                             }
                         },
                         d.getHours(), d.getMinutes(), true);
@@ -444,19 +404,23 @@ public class MainActivity  extends AppCompatActivity {
     private View.OnClickListener intervalButton = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Log.d("IntervalButton", "Clicked");
-
-            int i = view.getId();
+            int oldValue=seekBarProgress;
+             int i = view.getId();
             if (i == R.id.intervalDecrease) {
                 seekBarProgress--;
+                if (seekBarProgress<0) seekBarProgress=0;
             } else if (i == R.id.intervalIncrease) {
                 seekBarProgress++;
+                int idx=BasedOnMinute_00 ? 1 : 0;
+                if (seekBarProgress>seekBarMax[idx]) seekBarProgress=seekBarMax[idx];
             }
+            Log.d("IntervalButton", "seekBar Changed from "+oldValue+ " to "+seekBarProgress);
             ((SeekBar) findViewById(R.id.intervalSeekBar)).setProgress(seekBarProgress);
 
             setIntervalValue(seekBarProgress, BasedOnMinute_00);
             Log.d("intervalButton", "call AlarmSet()");
-            AlarmSet();
+            Calendar n=repeater.getNextAlarmTime(zones,intervalMinutes,BasedOnMinute_00,Calendar.getInstance());
+            if (n!=null ) AlarmSet(n);
         }
     };
 
@@ -465,118 +429,69 @@ public class MainActivity  extends AppCompatActivity {
     private CheckBox.OnCheckedChangeListener timeEnableSwitch = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-            switch (compoundButton.getId()) {
-                case R.id.TimeZone1_Enable:
-                    ZoneEnable[0] = b;
-                    break;
-                case R.id.TimeZone2_Enable:
-                    ZoneEnable[1] = b;
-                    break;
+        int idx=-1;
+        switch (compoundButton.getId()) {
+            case R.id.TimeZone1_Enable:
+                idx=0;
+                break;
+            case R.id.TimeZone2_Enable:
+                idx=1;
+                break;
+            default:
+                return;
+        }
+        Log.d("TimeZone", compoundButton.getText() + ":" + (b ? "Enable" : "Disable"));
+        zones[idx]=b ?
+                new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
+
+        if (b) {
+            for (int j = 0; j < 2; j++) {
+                int id = timeFieldId[idx][j];
+                TextView Field = findViewById(id);
+                try {
+                    // TextViewから設定時刻の情報を取得
+                    Date d = sd.parse((String) Field.getText());
+                    zones[idx][j].set(Calendar.HOUR_OF_DAY, d.getHours());
+                    zones[idx][j].set(Calendar.MINUTE, d.getMinutes());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
-            Log.d("TimeZone", compoundButton.getText() + ":" + (b ? "Enable" : "Disable"));
-            AlarmSet();
+            Calendar n = repeater.getNextAlarmTime(zones, intervalMinutes, BasedOnMinute_00, Calendar.getInstance());
+            if (n != null) AlarmSet(n);
+        }
         }
     };
 
-    private void AlarmSet() {
-        Calendar cal = Calendar.getInstance();
-        int hour = cal.get(Calendar.HOUR_OF_DAY);
-        int minute = cal.get(Calendar.MINUTE);
-        int next = (hour * 60 + minute) % (24 * 60);
-        Log.d("AlarmSet", "next:" + String.valueOf(next % 60));
-
-        if (BasedOnMinute_00) {
-            int next2 = next % intervalMinutes;
-            next += intervalMinutes - next2;
-        } else {
-            next += intervalMinutes;
-        }
-        Log.d("AlarmSet", "next2:" + String.valueOf(next % 60));
-
-        ArrayList<Integer> AlarmTime = new ArrayList<Integer>();
-
-        boolean Enable = false;
-        for (boolean bx : ZoneEnable) {
-            if (bx) {
-                Enable = true;
-                Log.d("TimeZone", "bx=true");
-                break;
-            } else {
-                Log.d("TimeZone", "bx=false");
-
-            }
-        }
-        // 時間帯のどれかが有効の場合
-        Intent intent = new Intent(MainActivity.this,AlarmReceiver.class);
-        PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-
-        // アラーム設定
-
+    private int NextAlarm;
+    private void AlarmSet(Calendar time) {
         am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        AlarmServe = false;
-        if (Enable) {
-            Log.d("AlarmTime", "Alarm Enabled");
-            // アラーム時刻変更
-            // 現在時刻と時間帯をもとにアラーム時刻を設定
+        Intent intent = new Intent(getApplication(),AlarmReceiver.class);
 
-            for (int index = 0; index < ZoneEnable.length; index++) {
-                int StartTimeIndex = index * 2;
-                int EndTimeIndex = StartTimeIndex + 1;
-
-                if (ZoneEnable[index]) {
-                    int StartTime = timeArray[StartTimeIndex];
-                    int EndTime = timeArray[EndTimeIndex];
-                    if (StartTime > EndTime) {
-                        // 開始時刻より終了時刻が早い＝翌日とみなす
-                        EndTime += 24 * 60;
-                    }
-                    if (EndTime > next && next > StartTime) {
-                        // 次回予定時刻がタイムゾーン内にある場合、次回予定時刻より早い直近の開始時間を探す
-                        AlarmTime.add(next);
-                    } else {
-                        // 現在時刻がタイムゾーン外の場合、次回予定時刻より遅い直近の開始時刻を探す。
-                        if (StartTime < next) {
-                            StartTime += 24 * 60;
-                        }
-                        AlarmTime.add(StartTime);
-                    }
-                }
-            }
-            int Start1 = -1;
-            int Start2 = 2 * 24 * 60;
-            for (int t : AlarmTime) {
-                if (t < next) {
-                    if (Start1 < t) Start1 = t;
-                } else {
-                    if (Start2 > t) Start2 = t;
-                }
-            }
-            int Start = (Start1 == -1) ? Start2 : Start1;
-            minute = Start % 60;
-            hour = (Start - minute) / 60;
-            int day = (hour >= 24) ? 1 : 0;
-            hour %= 24;
-
-            cal.add(Calendar.DAY_OF_MONTH, day);
-            cal.set(Calendar.HOUR_OF_DAY, hour);
-            cal.set(Calendar.MINUTE, minute);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            long mi = cal.getTimeInMillis();
+        if (time != null) {
+            time.set(Calendar.SECOND, 0);
+            time.set(Calendar.MILLISECOND, 0);
+            long mi = time.getTimeInMillis();
 //                 mi -= mi % (1000 * 60); // 秒を0にする
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-            Log.d("AlarmTime", sdf.format(cal.getTime()));
+            Log.d("AlarmTime", sdf.format(time.getTime()));
 
+            sdf = new SimpleDateFormat("HH:mm");
+            ((TextView) findViewById(R.id.nextTime)).setText(sdf.format(time.getTime()));
 
-            String time = String.format(Locale.US, "%1$02d:%2$02d", hour, minute);
-            ((TextView) findViewById(R.id.nextTime)).setText(time);
+            // 時間帯のどれかが有効の場合
 
-            if (am != null) {
-                am.setRepeating(AlarmManager.RTC_WAKEUP, mi, intervalMinutes * 60 * 1000, sender);
-                AlarmServe = true;
-            }
-        } else {
-            if (am != null) {
+            intent.putExtra("interval", intervalMinutes);
+            intent.putExtra("zones", zones);
+            intent.putExtra("triggerTime", mi);
+            intent.putExtra("basedOnHour", BasedOnMinute_00);
+            PendingIntent sender = PendingIntent.getBroadcast(getApplication(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        }
+        if (am != null) {
+            PendingIntent sender = PendingIntent.getBroadcast(getApplication(), 0, intent,PendingIntent.FLAG_CANCEL_CURRENT );
+            if (time != null) {
+                 am.setRepeating(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), intervalMinutes * 60 * 1000, sender);
+            } else {
                 am.cancel(sender);
             }
         }
@@ -615,8 +530,7 @@ public class MainActivity  extends AppCompatActivity {
 
 
     }
-
-}
+ }
 // ミニッツリピーター鳴動クラス
 class minutesRepeat extends Thread {
     // 音関係の変数
@@ -674,7 +588,92 @@ class minutesRepeat extends Thread {
         }
 
     }
+    public Calendar getNextAlarmTime(Calendar[][] zones,int interval,boolean basedOnHour,Calendar time) {
+        // timeがnullならnullを返す
+        if (time == null) return null;
 
+        // zonesのすべての要素がnullかどうかチェック
+        boolean enable = false;
+        for (int i = 0; i < zones.length; i++) {
+            if (zones[i] != null) {
+                enable = true;
+                break;
+            }
+        }
+        // すべてnullだったらnullを返す
+        if (enable == false) return null;
+
+        int hour = time.get(Calendar.HOUR_OF_DAY);
+        int minute = time.get(Calendar.MINUTE);
+        int next = (hour * 60 + minute) % (24 * 60);
+        Log.d("AlarmSet", "now:" + String.format("%1$02d:%2$02d", hour, minute));
+
+        Calendar nextTime = Calendar.getInstance();
+        nextTime.set(Calendar.HOUR_OF_DAY, hour);
+        nextTime.set(Calendar.MINUTE, minute);
+        // basedOnHourがtrueなら、毎時00分を基準にする
+        if (basedOnHour) {
+            nextTime.add(Calendar.MINUTE, interval - (minute % interval));
+        } else {
+            nextTime.add(Calendar.MINUTE, interval);
+        }
+
+        // アラーム時刻変更
+        // 現在時刻と時間帯をもとにアラーム時刻を設定
+        ArrayList<Calendar> AlarmTime = new ArrayList<Calendar>();
+
+        for (int i = 0; i < zones.length; i++) {
+            if (zones[i] == null) continue;
+            Calendar StartTime = zones[i][0];
+            Calendar EndTime = zones[i][1];
+            StartTime.set(Calendar.DATE, time.get(Calendar.DATE));
+            EndTime.set(Calendar.DATE, time.get(Calendar.DATE));
+
+            if (StartTime.getTimeInMillis() > EndTime.getTimeInMillis()) {
+                // 開始時刻より終了時刻が早い＝翌日とみなす
+                EndTime.add(Calendar.DATE, 1);
+            }
+            if (EndTime.getTimeInMillis() > nextTime.getTimeInMillis() &&
+                    nextTime.getTimeInMillis() > StartTime.getTimeInMillis()) {
+                // 次回予定時刻がタイムゾーン内にある場合、次回予定時刻より早い直近の開始時間を探す
+                AlarmTime.add(nextTime);
+            } else {
+                // 現在時刻がタイムゾーン外の場合、次回予定時刻より遅い直近の開始時刻を探す。
+                if (StartTime.getTimeInMillis() < nextTime.getTimeInMillis()) {
+                    StartTime.add(Calendar.DATE, 1);
+                }
+                AlarmTime.add(StartTime);
+            }
+        }
+
+        Calendar Start1 = time;
+        Start1.set(Calendar.HOUR_OF_DAY, 0);
+        Start1.set(Calendar.MINUTE, 0);
+        Start1.set(Calendar.SECOND, 0);
+        Start1.set(Calendar.MILLISECOND, 0);
+
+        Calendar Start2 = Start1;
+        Start2.add(Calendar.DATE, 2);
+        Start1.add(Calendar.MILLISECOND, -1);
+        Calendar Start0 = Start1;
+
+        // 開始時刻リストでループ
+        for (Calendar t : AlarmTime) {
+            // 開始時刻が予定時刻よりも早い && Start1が開始時刻よりも早いなら、Start1に開始時刻を入れる
+            if (t.getTimeInMillis() < nextTime.getTimeInMillis()) {
+                if (Start1.getTimeInMillis() < t.getTimeInMillis()) Start1 = t;
+            }
+            // 開始時刻が予定時刻よりも遅い && Start2が開始時刻よりも遅いなら、Start2に開始時刻を入れる
+            else {
+                if (Start2.getTimeInMillis() > t.getTimeInMillis()) Start2 = t;
+            }
+        }
+        // 全ての開始時刻が予定時刻よりも遅いなら、開始時刻の中で一番早い時刻を予定時刻にする
+        // 予定時刻よりも早い開始時刻があれば、そのなかで一番遅い開始時刻を予定時刻にする
+
+        Calendar Start = (Start1.getTimeInMillis() == Start0.getTimeInMillis()) ? Start2 : Start1;
+        return Start;
+    }
 
     // リピーター音を鳴らす処理
     public void run() {
@@ -760,5 +759,7 @@ class minutesRepeat extends Thread {
         }
 
     }
+
+
 }
 
