@@ -50,7 +50,7 @@ public class MainActivity  extends AppCompatActivity {
     // 正時のときの鳴動間隔
     public final int intervalList[] = {2, 3, 4, 5, 6, 10, 12, 15, 20, 30};
     // 最長鳴動間隔
-    public final int intervalMin[] = {2, intervalList[0]};
+    public final int intervalMin[] = {1, intervalList[0]};
     public final int seekBarMax[] = {60-intervalMin[0], intervalList.length - 1};
 
     // 音関係の変数
@@ -74,11 +74,15 @@ public class MainActivity  extends AppCompatActivity {
             R.id.TImeZone2_End_Text
         }
     };
-    public int timeButtonId[] = {
-            R.id.TimeZone1_Start,
-            R.id.TImeZone1_End,
-            R.id.TimeZone2_Start,
-            R.id.TImeZone2_End
+    public int timeButtonId[][] = {
+            {
+                    R.id.TimeZone1_Start,
+                    R.id.TImeZone1_End
+            },
+            {
+                    R.id.TimeZone2_Start,
+                    R.id.TImeZone2_End
+            }
     };
     public int seekBarProgress = 0;
     public int intervalMinutes = 2;
@@ -88,53 +92,8 @@ public class MainActivity  extends AppCompatActivity {
     public int getIntervals() {
         return intervalMinutes;
     }
-
-    private void getFieldValues() {
-        // 時間帯チェックボックス
-        zones[0]=((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked() ?
-            new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
-        zones[1]=((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked() ?
-                new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
-
-        // 時間情報を取得
-        for (int i = 0; i < zones.length; i++) {
-            if (zones[i] == null) continue;
-            for (int j = 0 ; j < 2; j++) {
-                int id = timeFieldId[i][j];
-                TextView Field = findViewById(id);
-                try {
-                    // TextViewから設定時刻の情報を取得
-                    Date d = sd.parse((String) Field.getText());
-                    zones[i][j].set(Calendar.HOUR_OF_DAY,d.getHours());
-                    zones[i][j].set(Calendar.MINUTE,d.getMinutes());
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        // 時間間隔を取得
-        seekBarProgress = ((SeekBar) findViewById(R.id.intervalSeekBar)).getProgress();
-
-        // 正時基準チェックボックスの値を取得
-        BasedOnMinute_00 = ((CheckBox) findViewById(R.id.ReferencedToTheHour)).isChecked();
-
-    }
-
-    // シークバーの値から鳴動間隔に変換
-    public void setIntervalValue(int progress, boolean regulate) {
-        int unitTime;
-        if (regulate) {
-            // 鳴動時刻を00分基準とした場合
-            unitTime = intervalList[progress];
-
-        } else {
-            unitTime = progress + intervalMin[0];
-        }
-        Log.d("setIntervalValue",String.format("%1$d(%2$d)",progress,unitTime));
-        ((TextView) findViewById(R.id.intervalNumber)).setText(String.valueOf(unitTime));
-        intervalMinutes = unitTime;
-    }
+    private Notification notification;
+    NotificationManager notificationManager;
 
     // 初期化ブロック
     @Override
@@ -143,12 +102,13 @@ public class MainActivity  extends AppCompatActivity {
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        Notification notification = new NotificationCompat.Builder(this)
+
+        notification = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.ic_launcher_round) // アイコン
                 .setTicker("Hello") // 通知バーに表示する簡易メッセージ
                 .setWhen(System.currentTimeMillis()) // 時間
@@ -326,15 +286,64 @@ public class MainActivity  extends AppCompatActivity {
         if (am!=null) {
             am.cancel(sender);
         }
+        notification.flags -= Notification.FLAG_ONGOING_EVENT;
+
+        notificationManager.notify(1, notification);
     }
 
+    private void getFieldValues() {
+        // 時間帯チェックボックス
+        zones[0]=((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked() ?
+                new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
+        zones[1]=((CheckBox) findViewById(R.id.TimeZone1_Enable)).isChecked() ?
+                new Calendar[]{Calendar.getInstance(),Calendar.getInstance()} : null;
+
+        // 時間情報を取得
+        for (int i = 0; i < zones.length; i++) {
+            if (zones[i] == null) continue;
+            for (int j = 0 ; j < 2; j++) {
+                int id = timeFieldId[i][j];
+                TextView Field = findViewById(id);
+                try {
+                    // TextViewから設定時刻の情報を取得
+                    Date d = sd.parse((String) Field.getText());
+                    zones[i][j].set(Calendar.HOUR_OF_DAY,d.getHours());
+                    zones[i][j].set(Calendar.MINUTE,d.getMinutes());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // 時間間隔を取得
+        seekBarProgress = ((SeekBar) findViewById(R.id.intervalSeekBar)).getProgress();
+
+        // 正時基準チェックボックスの値を取得
+        BasedOnMinute_00 = ((CheckBox) findViewById(R.id.ReferencedToTheHour)).isChecked();
+
+    }
+
+    // シークバーの値から鳴動間隔に変換
+    public void setIntervalValue(int progress, boolean regulate) {
+        int unitTime;
+        if (regulate) {
+            // 鳴動時刻を00分基準とした場合
+            unitTime = intervalList[progress];
+
+        } else {
+            unitTime = progress + intervalMin[0];
+        }
+        Log.d("setIntervalValue",String.format("%1$d(%2$d)",progress,unitTime));
+        ((TextView) findViewById(R.id.intervalNumber)).setText(String.valueOf(unitTime));
+        intervalMinutes = unitTime;
+    }
 
     // 時間帯入力用のリスナー
     private View.OnClickListener timeButton = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            final int i = view.getId();
-            Log.d("timeButton", String.valueOf(i));
+            final int id = view.getId();
+            Log.d("timeButton", String.valueOf(id));
 //            int time=timeArray[TimeZoneMap.get(i)];
             int minute1;
             int hour1;
@@ -342,17 +351,25 @@ public class MainActivity  extends AppCompatActivity {
 //            hour1= (time-minute1) /60;
 
             final HashMap<Integer, int[]> TimeZoneButtonMap=new HashMap<>();
+            for (int ix=0;ix<timeButtonId.length;ix++) {
+                for (int iy=0;iy<timeButtonId[ix].length;iy++) {
+                    TimeZoneButtonMap.put(timeButtonId[ix][iy], new int[]{ix, iy});
+                }
+            }
+            /*
             TimeZoneButtonMap.put(R.id.TimeZone1_Start, new int[]{0, 0});
             TimeZoneButtonMap.put(R.id.TImeZone1_End  , new int[]{0, 1});
             TimeZoneButtonMap.put(R.id.TimeZone2_Start, new int[]{1, 0});
             TimeZoneButtonMap.put(R.id.TImeZone2_End   , new int[]{1, 1});
+            */
 
-
+/*
             final SparseIntArray TimeZoneMap = new SparseIntArray(4);
             TimeZoneMap.append(R.id.TimeZone1_Start, 0);
             TimeZoneMap.append(R.id.TImeZone1_End, 1);
             TimeZoneMap.append(R.id.TimeZone2_Start, 2);
             TimeZoneMap.append(R.id.TImeZone2_End, 3);
+            */
 
             SparseIntArray Button2Text = new SparseIntArray(4);
             Button2Text.append(R.id.TimeZone1_Start, R.id.TimeZone1_Start_Text);
@@ -364,7 +381,7 @@ public class MainActivity  extends AppCompatActivity {
 
             try {
                 // ボタンに対応するTextViewから設定時刻の情報を取得
-                final TextView field = findViewById(Button2Text.get(i));
+                final TextView field = findViewById(Button2Text.get(id));
                 Date d = sd.parse((String) field.getText());
 
                 // 時刻入力ダイアログの処理
@@ -377,7 +394,7 @@ public class MainActivity  extends AppCompatActivity {
                             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                                 Log.d("timeChanged", String.format("%02d:%02d", hourOfDay, minute));
                                 field.setText(String.format("%02d:%02d", hourOfDay, minute));
-                                int idxList[]=TimeZoneButtonMap.get(i);
+                                int idxList[]=TimeZoneButtonMap.get(id);
                                 if (zones[idxList[0]]!= null) {
                                     Calendar cal = Calendar.getInstance();
                                     cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
@@ -417,7 +434,7 @@ public class MainActivity  extends AppCompatActivity {
             Log.d("IntervalButton", "seekBar Changed from "+oldValue+ " to "+seekBarProgress);
             ((SeekBar) findViewById(R.id.intervalSeekBar)).setProgress(seekBarProgress);
 
-            setIntervalValue(seekBarProgress, BasedOnMinute_00);
+            // setIntervalValue(seekBarProgress, BasedOnMinute_00);
             Log.d("intervalButton", "call AlarmSet()");
             Calendar n=repeater.getNextAlarmTime(zones,intervalMinutes,BasedOnMinute_00,Calendar.getInstance());
             if (n!=null ) AlarmSet(n);
