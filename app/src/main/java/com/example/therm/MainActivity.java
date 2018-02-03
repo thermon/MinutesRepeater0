@@ -136,7 +136,7 @@ public class MainActivity  extends AppCompatActivity  {
 
         // 自分のreceiverを登録
         IntentFilter filter = new IntentFilter();
-        filter.addAction("AlarmEvent");
+        filter.addAction("AlarmTimeChanged");
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(receiver, filter);
 
         {
@@ -637,7 +637,19 @@ public class MainActivity  extends AppCompatActivity  {
 */
         }
     };
- }
+    private BroadcastReceiver ringerReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            minutesRepeat repeater = new minutesRepeat(context);
+            Handler mHandler = new Handler(context.getMainLooper());
+            repeater.setHandler(mHandler);
+
+            Thread mThread = new Thread(repeater);
+            mThread.start();
+        }
+    };
+
+}
 // ミニッツリピーター鳴動クラス
 class minutesRepeat extends Application
         implements Runnable {
@@ -798,7 +810,8 @@ class minutesRepeat extends Application
         cal.set(Calendar.HOUR_OF_DAY,hour);
         cal.set(Calendar.MINUTE,minute);
         cal.add(Calendar.DATE,day);
-
+        cal.set(Calendar.SECOND,0);
+        cal.set(Calendar.MILLISECOND,0);
 
         return cal;
     }
