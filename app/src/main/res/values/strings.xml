@@ -32,8 +32,8 @@
     <string name="button_SoundTest">現在時刻テスト／音量調整</string>
     <string name="checkbox_ReferencedToTheHour">正時を基準にする</string>
     <string name="textView_NextTimeText">次回鳴動時刻</string>
-    <string name="textView_NowTime">未設定</string>
-    <string name="textView_NextTime">未設定</string>
+    <string name="textView_NowTime">00:00:00</string>
+    <string name="textView_NextTime">undefined</string>
     <string name="textView_NowTimeText">現在時刻</string>
     <string name="decrease">＜</string>
     <string name="increase">＞</string>

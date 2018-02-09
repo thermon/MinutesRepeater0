@@ -9,67 +9,37 @@
    <RelativeLayout
        android:id="@+id/relativeLayout"
        android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:layout_marginBottom="8dp"
+       android:layout_height="389dp"
+       android:layout_marginBottom="4dp"
        android:layout_marginEnd="8dp"
        android:layout_marginStart="8dp"
        app:layout_constraintBottom_toBottomOf="parent"
        app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintHorizontal_bias="0.526"
        app:layout_constraintLeft_toLeftOf="parent"
        app:layout_constraintStart_toStartOf="parent">
-
-      <Button
-          android:id="@+id/nowTimeButton"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:layout_alignParentLeft="true"
-          android:layout_alignParentStart="true"
-
-          android:text="@string/button_SoundTest"
-          android:textSize="12sp"
-          android:visibility="visible"
-          app:layout_constraintStart_toStartOf="parent" />
-
-      <TextView
-          android:id="@+id/nowTime"
-          android:layout_width="wrap_content"
-          android:layout_height="match_parent"
-          android:layout_alignBottom="@+id/nowTimeButton"
-          android:layout_alignEnd="@+id/TimeZone1_Enable"
-          android:layout_alignRight="@+id/TimeZone1_Enable"
-          android:layout_alignTop="@+id/nowTimeButton"
-          android:layout_centerHorizontal="false"
-          android:layout_centerVertical="false"
-          android:layout_toEndOf="@+id/nowTimeButton"
-          android:layout_toRightOf="@+id/nowTimeButton"
-
-          android:gravity="center_vertical|center_horizontal"
-          android:paddingLeft="4dp"
-          android:paddingRight="4dp"
-          android:text="@string/textView_NowTime"
-          android:textSize="24sp"
-          android:textStyle="bold"
-          app:layout_constraintStart_toEndOf="@+id/nowTimeButton" />
 
       <CheckBox
           android:id="@+id/TimeZone1_Enable"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignEnd="@+id/TimeZone1_End_Text"
-          android:layout_alignLeft="@+id/textView"
-          android:layout_alignRight="@+id/TimeZone1_End_Text"
-          android:layout_alignStart="@+id/textView"
-          android:layout_below="@+id/nowTimeButton"
 
+
+          android:layout_above="@+id/TimeZone1_Start"
+          android:layout_alignEnd="@+id/ReferencedToTheHour"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:layout_alignRight="@+id/ReferencedToTheHour"
           android:text="@string/checkBox_Time1" />
 
       <Button
           android:id="@+id/TimeZone1_Start"
           android:layout_width="80dp"
           android:layout_height="wrap_content"
+
+          android:layout_above="@+id/TimeZone2_Enable"
           android:layout_alignParentLeft="true"
           android:layout_alignParentStart="true"
-          android:layout_below="@+id/TimeZone1_Enable"
           android:text="@string/button_StartTime1"
           android:textSize="12sp" />
 
@@ -77,23 +47,22 @@
           android:id="@+id/TimeZone1_Start_Text"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignBottom="@+id/TimeZone1_Start"
-          android:layout_below="@+id/TimeZone1_Enable"
-          android:layout_marginBottom="8dp"
-          android:layout_marginTop="8dp"
+          android:layout_above="@+id/TimeZone2_Enable"
+
+          android:layout_alignTop="@+id/TimeZone1_Start"
           android:layout_toEndOf="@+id/TimeZone1_Start"
-          android:layout_toRightOf="@+id/TimeZone1_Start"
+          android:gravity="center_vertical|center_horizontal"
           android:text="@string/textView_StartTime1"
           android:textSize="24sp"
-          android:textStyle="bold" />
+          android:textStyle="bold"
+          android:layout_toRightOf="@+id/TimeZone1_Start" />
 
       <Button
           android:id="@+id/TImeZone1_End"
           android:layout_width="80dp"
           android:layout_height="wrap_content"
-          android:layout_alignEnd="@+id/TImeZone2_End"
-          android:layout_alignRight="@+id/TImeZone2_End"
-          android:layout_below="@+id/TimeZone1_Enable"
+
+          android:layout_above="@+id/TimeZone2_Enable"
           android:layout_toEndOf="@+id/TimeZone1_Start_Text"
           android:layout_toRightOf="@+id/TimeZone1_Start_Text"
           android:text="@string/button_EndTime1"
@@ -103,12 +72,12 @@
           android:id="@+id/TimeZone1_End_Text"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignBottom="@+id/TImeZone1_End"
-          android:layout_below="@+id/TimeZone1_Enable"
-          android:layout_marginBottom="8dp"
-          android:layout_marginTop="8dp"
-          android:layout_toEndOf="@+id/TImeZone2_End"
-          android:layout_toRightOf="@+id/TImeZone2_End"
+
+          android:layout_above="@+id/TimeZone2_Enable"
+          android:layout_alignTop="@+id/TImeZone1_End"
+          android:layout_toEndOf="@+id/TImeZone1_End"
+          android:layout_toRightOf="@+id/TImeZone1_End"
+          android:gravity="center_vertical|center_horizontal"
           android:text="@string/textView_EndTime1"
           android:textSize="24sp"
           android:textStyle="bold" />
@@ -117,21 +86,20 @@
           android:id="@+id/TimeZone2_Enable"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignEnd="@+id/TimeZone1_End_Text"
+
+          android:layout_above="@+id/TimeZone2_Start"
           android:layout_alignParentLeft="true"
           android:layout_alignParentStart="true"
-          android:layout_alignRight="@+id/TimeZone1_End_Text"
-          android:layout_below="@+id/TimeZone1_Start"
-
           android:text="@string/checkBox_Time2" />
 
       <Button
           android:id="@+id/TimeZone2_Start"
           android:layout_width="80dp"
           android:layout_height="wrap_content"
+
+          android:layout_above="@+id/ReferencedToTheHour"
           android:layout_alignParentLeft="true"
           android:layout_alignParentStart="true"
-          android:layout_below="@+id/TimeZone2_Enable"
           android:text="@string/button_StartTime2"
           android:textSize="12sp" />
 
@@ -139,18 +107,21 @@
           android:id="@+id/TimeZone2_Start_Text"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignBaseline="@+id/TImeZone2_End_Text"
-          android:layout_alignBottom="@+id/TImeZone2_End_Text"
+          android:layout_alignBottom="@+id/TimeZone2_Start"
+
+          android:layout_alignTop="@+id/TimeZone2_Start"
           android:layout_toEndOf="@+id/TimeZone2_Start"
-          android:layout_toRightOf="@+id/TimeZone2_Start"
+          android:gravity="center_vertical|center_horizontal"
           android:text="@string/textView_StartTime2"
           android:textSize="24sp"
-          android:textStyle="bold" />
+          android:textStyle="bold"
+          android:layout_toRightOf="@+id/TimeZone2_Start" />
 
       <Button
           android:id="@+id/TImeZone2_End"
           android:layout_width="80dp"
           android:layout_height="wrap_content"
+
           android:layout_below="@+id/TimeZone2_Enable"
           android:layout_toEndOf="@+id/TimeZone2_Start_Text"
           android:layout_toRightOf="@+id/TimeZone2_Start_Text"
@@ -161,11 +132,12 @@
           android:id="@+id/TImeZone2_End_Text"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_below="@+id/TimeZone2_Enable"
-          android:layout_marginBottom="8dp"
-          android:layout_marginTop="8dp"
+
+          android:layout_above="@+id/ReferencedToTheHour"
+          android:layout_alignTop="@+id/TImeZone2_End"
           android:layout_toEndOf="@+id/TImeZone2_End"
           android:layout_toRightOf="@+id/TImeZone2_End"
+          android:gravity="center_vertical|center_horizontal"
           android:text="@string/textView_EndTime2"
           android:textSize="24sp"
           android:textStyle="bold" />
@@ -174,11 +146,12 @@
           android:id="@+id/ReferencedToTheHour"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_alignEnd="@+id/TImeZone2_End_Text"
-          android:layout_alignRight="@+id/TImeZone2_End_Text"
-          android:layout_below="@+id/TimeZone2_Start"
 
-          android:layout_marginTop="8dp"
+          android:layout_above="@+id/textView"
+          android:layout_alignEnd="@+id/TImeZone2_End_Text"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:layout_alignRight="@+id/TImeZone2_End_Text"
           android:text="@string/checkbox_ReferencedToTheHour"
           app:layout_constraintStart_toStartOf="parent" />
 
@@ -186,12 +159,12 @@
           android:id="@+id/intervalDecrease"
           android:layout_width="32dp"
           android:layout_height="40dp"
-          android:layout_alignLeft="@+id/textView"
-          android:layout_alignStart="@+id/textView"
-          android:layout_below="@+id/textView"
-          android:layout_marginEnd="32sp"
 
-          android:layout_marginRight="32sp"
+          android:layout_above="@+id/textView2"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:layout_toLeftOf="@+id/TImeZone2_End"
+          android:layout_toStartOf="@+id/TImeZone2_End"
           android:text="@string/decrease"
           android:textSize="8sp"
           app:layout_constraintLeft_toLeftOf="parent"
@@ -202,13 +175,13 @@
           android:id="@+id/intervalSeekBar"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_above="@+id/nextTime"
-          android:layout_below="@+id/textView"
-          android:layout_toEndOf="@+id/intervalDecrease"
-          android:layout_toLeftOf="@+id/intervalIncrease"
-          android:layout_toRightOf="@+id/intervalDecrease"
-          android:layout_toStartOf="@+id/intervalIncrease"
 
+
+          android:layout_above="@+id/intervalDecrease"
+          android:layout_alignEnd="@+id/intervalIncrease"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:layout_alignRight="@+id/intervalIncrease"
           android:max="58"
           android:visibility="visible"
           tools:layout_editor_absoluteY="16dp" />
@@ -217,12 +190,12 @@
           android:id="@+id/intervalIncrease"
           android:layout_width="32dp"
           android:layout_height="40dp"
+
+          android:layout_above="@+id/nextTime"
           android:layout_alignEnd="@+id/TImeZone2_End_Text"
           android:layout_alignRight="@+id/TImeZone2_End_Text"
-          android:layout_below="@+id/intervalNumber"
-          android:layout_marginLeft="32sp"
-
-          android:layout_marginStart="32sp"
+          android:layout_toEndOf="@+id/intervalDecrease"
+          android:layout_toRightOf="@+id/intervalDecrease"
           android:maxWidth="5dp"
           android:text="@string/increase"
           android:textAllCaps="false"
@@ -235,12 +208,14 @@
           android:id="@+id/textView"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+
+          android:layout_above="@+id/intervalSeekBar"
           android:layout_alignParentLeft="true"
           android:layout_alignParentStart="true"
-          android:layout_below="@+id/ReferencedToTheHour"
+          android:layout_alignTop="@+id/intervalNumber"
           android:layout_toLeftOf="@+id/intervalNumber"
           android:layout_toStartOf="@+id/intervalNumber"
-
+          android:gravity="center_vertical"
           android:text="@string/text_RepeaterInterval"
           android:textSize="14sp"
           android:textStyle="bold"
@@ -252,10 +227,10 @@
           android:id="@+id/intervalNumber"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+
+          android:layout_above="@+id/intervalSeekBar"
           android:layout_alignEnd="@+id/TImeZone2_End_Text"
           android:layout_alignRight="@+id/TImeZone2_End_Text"
-          android:layout_below="@+id/ReferencedToTheHour"
-
           android:gravity="end"
           android:paddingEnd="8dp"
           android:paddingStart="8dp"
@@ -269,12 +244,14 @@
           android:id="@+id/textView2"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignLeft="@+id/intervalDecrease"
-          android:layout_alignStart="@+id/intervalDecrease"
-          android:layout_below="@+id/intervalDecrease"
-          android:layout_marginTop="8dp"
-          android:layout_toLeftOf="@+id/nextTime"
-          android:layout_toStartOf="@+id/nextTime"
+
+          android:layout_above="@+id/nowTimeButton"
+          android:layout_alignEnd="@+id/nowTimeButton"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:layout_alignRight="@+id/nowTimeButton"
+          android:layout_alignTop="@+id/nextTime"
+          android:gravity="center_vertical|center_horizontal"
           android:text="@string/textView_NextTimeText"
           android:textSize="14sp"
           android:textStyle="bold"
@@ -286,12 +263,13 @@
           android:id="@+id/nextTime"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignEnd="@+id/intervalIncrease"
-          android:layout_alignRight="@+id/intervalIncrease"
-          android:layout_below="@+id/intervalIncrease"
-          android:layout_toEndOf="@+id/nowTimeButton"
-          android:layout_toRightOf="@+id/nowTimeButton"
-          android:gravity="center_vertical|center_horizontal"
+
+
+          android:layout_above="@+id/nowTimeButton"
+          android:layout_toEndOf="@+id/textView2"
+          android:layout_toRightOf="@+id/textView2"
+          android:foregroundGravity="left|center_vertical"
+          android:gravity="start|center_vertical"
           android:paddingLeft="4dp"
           android:paddingRight="4dp"
           android:text="@string/textView_NextTime"
@@ -302,14 +280,47 @@
           app:layout_constraintStart_toEndOf="@+id/textView2"
           app:layout_constraintTop_toBottomOf="@+id/intervalSeekBar" />
 
+      <Button
+          android:id="@+id/nowTimeButton"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+
+
+          android:layout_alignParentBottom="true"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:text="@string/button_SoundTest"
+          android:textSize="12sp"
+          android:visibility="visible"
+          app:layout_constraintLeft_toLeftOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          tools:layout_editor_absoluteY="37dp" />
+
+      <TextView
+          android:id="@+id/nowTime"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+
+
+          android:layout_alignLeft="@+id/nextTime"
+          android:layout_alignParentBottom="true"
+          android:layout_alignStart="@+id/nextTime"
+          android:layout_alignTop="@+id/nowTimeButton"
+          android:gravity="start|center_vertical"
+          android:paddingLeft="4dp"
+          android:paddingRight="4dp"
+          android:text="@string/textView_NowTime"
+          android:textSize="24sp"
+          android:textStyle="bold"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintRight_toRightOf="parent" />
+
    </RelativeLayout>
 
    <ToggleButton
        android:id="@+id/runOnBootComplete"
        android:layout_width="wrap_content"
        android:layout_height="wrap_content"
-       android:layout_alignParentLeft="true"
-       android:layout_alignParentStart="true"
        android:layout_alignParentTop="true"
        android:layout_marginEnd="8dp"
        android:layout_marginStart="8dp"
@@ -320,5 +331,6 @@
        app:layout_constraintEnd_toEndOf="parent"
        app:layout_constraintStart_toStartOf="parent"
        app:layout_constraintTop_toTopOf="parent" />
+
 
 </android.support.constraint.ConstraintLayout>

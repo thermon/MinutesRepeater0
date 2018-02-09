@@ -13,10 +13,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Set;
 
-public class AlarmReceiver extends BroadcastReceiver {
+public class ringReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d("AlarmReceiver","called");
         minutesRepeat repeater = new minutesRepeat(context);
         Handler mHandler = new Handler(context.getMainLooper());
         repeater.setHandler(mHandler);
@@ -25,9 +26,11 @@ public class AlarmReceiver extends BroadcastReceiver {
         mThread.start();
         //repeater.run();
 
+        /*
         // スクリーンオン
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "My Tag");
         wl.acquire(20000);
+        */
     }
 }

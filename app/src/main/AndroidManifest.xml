@@ -20,7 +20,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".AlarmReceiver" />
+        <receiver android:name=".ringReceiver"/>
 
         <receiver
             android:name=".StartupReceiver"
@@ -37,7 +37,7 @@
         </receiver>
 
 
-        <service android:name=".AlarmService" />
+        <service android:name=".AlarmService"/>
 
     </application>
 
