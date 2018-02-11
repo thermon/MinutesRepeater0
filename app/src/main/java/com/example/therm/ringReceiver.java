@@ -12,19 +12,18 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ringReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("AlarmReceiver","called");
-        minutesRepeat repeater = new minutesRepeat(context);
-        Handler mHandler = new Handler(context.getMainLooper());
-        repeater.setHandler(mHandler);
-
-        Thread mThread = new Thread(repeater);
-        mThread.start();
-        //repeater.run();
+        Log.d("ringReceiver","called");
+        new minutesRepeat(context).ring();
 
         /*
         // スクリーンオン

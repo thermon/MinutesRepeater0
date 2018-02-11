@@ -11,6 +11,7 @@ import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.therm.MainActivity.PreferencesName;
@@ -28,7 +30,7 @@ import static com.example.therm.MainActivity.timeButtonId;
 import static java.util.Arrays.*;
 
 // ミニッツリピーター鳴動クラス
-public class minutesRepeat implements Runnable {
+class minutesRepeat {
 
 
     private final int resId[] = {
@@ -42,6 +44,8 @@ public class minutesRepeat implements Runnable {
     private int soundId[] = new int[resId.length];
 
     private int[] waitArray = new int[resId.length];
+    private int wait0=400;  // 鳴動前ウェイト
+    private int wait1=200;  // 鳴動中ベルの音が変わる時のウェイト
     private Context MainContext;
     private SharedPreferences sharedPreferences;
 
@@ -69,6 +73,23 @@ public class minutesRepeat implements Runnable {
         MainContext = context;
         sharedPreferences = MainContext.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE);
 
+        // AudioManagerを取得する
+        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+
+        if (am != null) {
+            // 現在の音量を取得する
+            int ringVolume = am.getStreamVolume(myStreamId);
+
+            // ストリームごとの最大音量を取得する
+            int ringMaxVolume = am.getStreamMaxVolume(myStreamId);
+
+            // 音量を設定する
+            am.setStreamVolume(myStreamId, ringVolume, 0);
+        }
+        intervalMinutes = 2;
+    }
+
+    private void soundLoad() {
         // 音読み込み
         //ロリポップより前のバージョンに対応するコード
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -92,32 +113,18 @@ public class minutesRepeat implements Runnable {
             }
         });
 
-        // AudioManagerを取得する
-        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-
-        if (am != null) {
-            // 現在の音量を取得する
-            int ringVolume = am.getStreamVolume(myStreamId);
-
-            // ストリームごとの最大音量を取得する
-            int ringMaxVolume = am.getStreamMaxVolume(myStreamId);
-
-            // 音量を設定する
-            am.setStreamVolume(myStreamId, ringVolume, 0);
-        }
 
         //あらかじめ音をロードする必要がある　※直前にロードしても間に合わないので早めに
         for (int i = 0; i < resId.length; i++) {
-                int id = SoundsPool.load(
-                        context, resId[i], 1);
-                soundId[i] = id;
-                MediaPlayer mp = MediaPlayer.create(context, resId[i]);
-                waitArray[i] = mp.getDuration();
-                mp.release();
+            int id = SoundsPool.load(
+                    MainContext, resId[i], 1);
+            soundId[i] = id;
+            MediaPlayer mp = MediaPlayer.create(MainContext, resId[i]);
+            waitArray[i] = mp.getDuration();
+            mp.release();
         }
-        intervalMinutes = 2;
-    }
 
+    }
     int[][][] getZonesArray() {
         return zonesArray;
     }
@@ -255,7 +262,12 @@ public class minutesRepeat implements Runnable {
         // nextTime += interval - (basedOnHour ? (minute % interval) :0);
 
 //        if (basedOnHour) nextTime-= minute % interval;
-        if (basedOnHour) nextTime -= ((nextTime % minutesOfHour ) % interval);
+        if (basedOnHour) {
+            int modulo=((nextTime % minutesOfHour) % interval);
+            if (modulo>0) {
+                nextTime -= ((nextTime % minutesOfHour) % interval);
+            }
+        }
         nextTime += interval;
 
         Log.d("getNextAlarmTime", "next=" + timeFormat(nextTime));
@@ -340,6 +352,14 @@ public class minutesRepeat implements Runnable {
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
+        int offsetMilli=0;
+        int count[]=div_qr(minute,15);
+        offsetMilli+=hour*waitArray[0];
+        for (int i=0;i<2;i++) {
+            if (count[i] > 0) offsetMilli += count[i] * waitArray[i + 1] + wait1;
+        }
+        // cal.add(Calendar.MILLISECOND,-offsetMilli);
+
         return cal;
     }
 
@@ -367,8 +387,8 @@ public class minutesRepeat implements Runnable {
                 // new Intent("service");
 
         if (time != null) {
-            time.set(Calendar.SECOND, 0);
-            time.set(Calendar.MILLISECOND, 0);
+//            time.set(Calendar.SECOND, 0);
+//            time.set(Calendar.MILLISECOND, 0);
 
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
             Log.d("AlarmSet", sdf.format(time.getTime()));
@@ -393,7 +413,9 @@ public class minutesRepeat implements Runnable {
         return new int []{(a - m ) /b,m};
      }
     // リピーター音を鳴らす処理
-    public void run() {
+    Integer ring() {
+        soundLoad();
+
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
@@ -406,7 +428,7 @@ public class minutesRepeat implements Runnable {
         if (hour == 0) hour = 12;
 
 //        int count[] = {hour, min_15, min_1}; // 鳴動回数
-        int count[] = {hour, minArray[0],minArray[1]}; // 鳴動回数
+        final int count[] = {hour, minArray[0],minArray[1]}; // 鳴動回数
 
         try {
             TimeUnit.MILLISECONDS.sleep(100);
@@ -414,34 +436,44 @@ public class minutesRepeat implements Runnable {
             e.printStackTrace();
         }
 
+        HandlerThread mHT=new HandlerThread("repeater");
+        mHT.start();
+
+        Handler mHandler=new Handler(mHT.getLooper());
+
+        Integer errorCount=0;
+
+        int wait=wait0;
         for (int k = 0; k < resId.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
 //            Log.d("debug", "k=" + k);
 
+
             if (count[k] > 0) {   // カウントする場合
+                final int finalK = k;
+                final int[] play = {0};
+                mHandler.postDelayed(new Runnable() {
+                     @Override
+                     public void run() {
+                         while (play[0] == 0) {
+                             play[0] = SoundsPool.play(soundId[finalK], 1.0f, 1.0f, 0, count[finalK] - 1, 1.0f);
+                         }
+                     }
+                 }
+                , wait);
+                wait+=waitArray[k] * count[k] + wait1;
+                if (play[0]<0) errorCount--;
+/*
                 // 鳴動前時間待ち
                 try {
-                    TimeUnit.MILLISECONDS.sleep(400);
+                    TimeUnit.MILLISECONDS.sleep(wait0);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-
                 }
-                ring(k, count[k]);
-            }
-        }
-    }
 
-    // SoundPoolから音を鳴らし、waitミリ秒待つ
-    private void ring(final int sound, final int loop) {
-        int play = SoundsPool.play(soundId[sound], 1.0f, 1.0f, 0, loop - 1, 1.0f);
-        if (play<0) {
-            Log.d("minutesRepeat", String.format("SoundPool.play error. id=%d,result=%d", soundId[sound], play));
-        }
-        try {
-                TimeUnit.MILLISECONDS.sleep((waitArray[sound] * loop) + 200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                errorCount+=ring(k, count[k]);
+                */
             }
-            SoundsPool.pause(soundId[sound]);
+        }
     }
 
     void setHandler(Handler mHandler) {
@@ -453,8 +485,9 @@ public class minutesRepeat implements Runnable {
             SoundsPool.unload(aSoundId);
         }
         SoundsPool.release();
-        SoundsPool=null;
+//        SoundsPool=null;
     }
+
 
 
 }

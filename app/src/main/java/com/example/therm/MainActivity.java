@@ -35,6 +35,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.example.therm.R.id.nowTime;
 
@@ -57,18 +61,18 @@ public class MainActivity  extends AppCompatActivity  {
 
     // 時間帯
 
-    public static final int timeButtonId[][] =
+    public static final int timeButtonId[][][] =new int [][][]
     {
         {
-            R.id.TimeZone1_Enable,
-            R.id.TimeZone1_Start,   R.id.TimeZone1_Start_Text ,
-            R.id.TImeZone1_End,     R.id.TimeZone1_End_Text
+            {R.id.TimeZone1_Enable},
+            {R.id.TimeZone1_Start,   R.id.TimeZone1_Start_Text} ,
+            {R.id.TImeZone1_End,     R.id.TimeZone1_End_Text}
 
         },
         {
-            R.id.TimeZone2_Enable,
-            R.id.TimeZone2_Start,   R.id.TimeZone2_Start_Text,
-            R.id.TImeZone2_End,     R.id.TImeZone2_End_Text
+            {R.id.TimeZone2_Enable},
+            {R.id.TimeZone2_Start,   R.id.TimeZone2_Start_Text},
+            {R.id.TImeZone2_End,     R.id.TImeZone2_End_Text}
         }
     };
 
@@ -89,13 +93,14 @@ public class MainActivity  extends AppCompatActivity  {
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
+        timeButtonIdClass = new myTimeZoneUI[timeButtonId.length];
 
-        timeButtonIdClass = new myTimeZoneUI[]{
-                new myTimeZoneUI(timeButtonId[0]),
-                new myTimeZoneUI(timeButtonId[1])
-        };
-
-        for (int i=0;i<timeButtonIdClass.length;i++) {
+        for (int i=0;i<timeButtonId.length;i++) {
+            timeButtonIdClass[i]=new myTimeZoneUI(
+                    timeButtonId[i][0][0],
+                    timeButtonId[i][1],
+                    timeButtonId[i][2]
+            );
             timeButtonIdClass[i].zoneIndex=i;
         }
 
@@ -132,7 +137,6 @@ public class MainActivity  extends AppCompatActivity  {
         // UIスレッドにpost(Runnable)やsendMessage(message)を送りつけるハンドラーを作成
         mHandler = new Handler(getMainLooper());
 
-        repeater.setHandler(mHandler);
         repeater.AlarmSet(Calendar.getInstance());
 
         ((ToggleButton) findViewById(R.id.runOnBootComplete)).setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
@@ -223,19 +227,19 @@ public class MainActivity  extends AppCompatActivity  {
         }
 
         // looperを内包するスレッドを作る
-        HandlerThread repeaterThread = new HandlerThread("rep");
+        HandlerThread timerThread = new HandlerThread("timer");
         // スレッド起動
-        repeaterThread.start();
-
+        timerThread.start();
         // 先程作ったスレッドにRunnableを送りつけられるハンドルを作る
-        repeaterHandler = new Handler(repeaterThread.getLooper());
+        repeaterHandler = new Handler(timerThread.getLooper());
 
         //　現在時刻鳴動
         Button nowTimeButton = findViewById(R.id.nowTimeButton);
         nowTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                repeaterHandler.post(repeater);    // UIスレッドとは別スレッドでリピーターを鳴らす
+                repeater.ring();
+
                 // AudioManagerを取得する
                 AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
@@ -283,7 +287,6 @@ public class MainActivity  extends AppCompatActivity  {
             mTimer = null;
         }
         repeater.releaseSound();
-        repeater=null;
     }
 
 
@@ -362,19 +365,6 @@ public class MainActivity  extends AppCompatActivity  {
 
         }
     };
-    private BroadcastReceiver ringReceiver=new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("AlarmReceiver","called");
-            minutesRepeat repeater = new minutesRepeat(context);
-            Handler mHandler = new Handler(context.getMainLooper());
-            repeater.setHandler(mHandler);
-
-            Thread mThread = new Thread(repeater);
-            mThread.start();
-            //repeater.run();
-        }
-    };
 
     class myTimeZoneUI {
         private CheckBox checkBox;
@@ -382,16 +372,12 @@ public class MainActivity  extends AppCompatActivity  {
         int zoneIndex=0;
         private static final String className="myTimeZoneUI";
 
-        myTimeZoneUI(int ids[]
-//                checkBoxId
-//                ,int startTimeButtonId,int startTimeTextViewId
-//                             ,int endTimeButtonId,int endTimeTextViewId
-        ){
+        myTimeZoneUI(int checkBoxId,int start[],int end[] ){
 
-            checkBox=findViewById(ids[0]);
+            checkBox=findViewById(checkBoxId);
             time=new myTimeUI[]{
-                    new myTimeUI(ids[1], ids[2]),
-                    new myTimeUI(ids[3], ids[4])
+                    new myTimeUI(start[0], start[1]),
+                    new myTimeUI(end[0], end[1])
             };
             for (int i=0;i<time.length;i++) {
                 time[i].timeIndex=i;
@@ -424,14 +410,12 @@ public class MainActivity  extends AppCompatActivity  {
         class myTimeUI {
             private Button button=null;
             private TextView text=null;
-            private int time[]=new int[]{0,0};
             private int timeIndex=0;
             private static final String className="myTImeUI";
 
-            myTimeUI(int buttonId, int textViewId) {
+            myTimeUI(int  buttonId, int textViewId) {
                 button=findViewById(buttonId);
                 text=findViewById(textViewId);
-//                time=new int []{hour,minute};
 
                 // 時間帯入力用のリスナー
                 button.setOnClickListener(new View.OnClickListener() {
