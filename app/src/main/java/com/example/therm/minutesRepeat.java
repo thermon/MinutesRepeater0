@@ -17,6 +17,8 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import org.jetbrains.annotations.Contract;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -190,9 +192,7 @@ class minutesRepeat {
 
     void loadData() {
         Gson gson = new Gson();
-//        zones=null;
         zonesArray = null;
-//        zones=gson.fromJson(sharedPreferences.getString("zones",null),int[][].class);
         zonesArray = gson.fromJson(sharedPreferences.getString("zonesArray", null), int[][][].class);
         zonesEnable = gson.fromJson(sharedPreferences.getString("zonesEnable", null), boolean[].class);
         intervalProgress = sharedPreferences.getInt("intervalSeekBar", 0);
@@ -208,9 +208,6 @@ class minutesRepeat {
                 {
                     {0,0},{0,0}
                 };
-//                for (int j = 0; j < zonesArray[i].length; j++) {
-//                    zonesArray[i][j] = new int[]{0, 0};
-//                }
             }
         }
         if (zonesEnable == null) zonesEnable = new boolean[MainActivity.timeButtonId.length];
@@ -229,9 +226,7 @@ class minutesRepeat {
         return unitTime;
     }
 
-    int floorMinutes(int minutes,int interval) {
-        return minutes - ((minutes % minutesOfHour ) % interval);
-    }
+    @Contract(pure = true)
     private int makeTime(int[] time) {
         return time[0] * minutesOfHour + time[1];
     }
@@ -413,15 +408,12 @@ class minutesRepeat {
         return new int []{(a - m ) /b,m};
      }
     // リピーター音を鳴らす処理
-    Integer ring() {
+    void ring() {
         soundLoad();
 
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
-//        int minuteDivide = 15;
-//        int min_1 = minute % minuteDivide;
-//        int min_15 = (minute - min_1) / minuteDivide;
         int [] minArray= div_qr(minute , 15);
 
         hour %= 12;
@@ -462,22 +454,8 @@ class minutesRepeat {
                 , wait);
                 wait+=waitArray[k] * count[k] + wait1;
                 if (play[0]<0) errorCount--;
-/*
-                // 鳴動前時間待ち
-                try {
-                    TimeUnit.MILLISECONDS.sleep(wait0);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                errorCount+=ring(k, count[k]);
-                */
             }
         }
-    }
-
-    void setHandler(Handler mHandler) {
-        myHandler = mHandler;
     }
 
     void releaseSound() {
