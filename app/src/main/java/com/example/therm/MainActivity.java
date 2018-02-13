@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -34,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static com.example.therm.R.id.nowTime;
+import static com.example.therm.myApplication.getClassName;
 
 public class MainActivity  extends AppCompatActivity  {
     // 正時のときの鳴動間隔
@@ -119,7 +119,6 @@ public class MainActivity  extends AppCompatActivity  {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        new myApplication();
 
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
@@ -269,22 +268,7 @@ public class MainActivity  extends AppCompatActivity  {
         nowTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                repeater.ring();
-
-                // AudioManagerを取得する
-                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-
-                if (am != null) {
-                    // 現在の音量を取得する
-                    int ringVolume = am.getStreamVolume(minutesRepeat.myStreamId);
-
-                    // ストリームごとの最大音量を取得する
-                    int ringMaxVolume = am.getStreamMaxVolume(minutesRepeat.myStreamId);
-
-                    // 音量を設定する（UI表示かつサウンドを再生する）
-                    int flags = AudioManager.FLAG_SHOW_UI | AudioManager.FLAG_PLAY_SOUND;
-                    am.setStreamVolume(minutesRepeat.myStreamId, ringVolume, flags);
-                }
+                new ringAlarm(getApplicationContext());
             }
         });
 
@@ -357,13 +341,13 @@ public class MainActivity  extends AppCompatActivity  {
     }
 
     class myTimeZoneUI {
-        private static final String className = "myTimeZoneUI";
         int zoneIndex = 0;
+        private String className;
         private CheckBox checkBox;
         private myTimeUI time[]=null;
 
         myTimeZoneUI(int checkBoxId,int start[],int end[] ){
-
+            className = myApplication.getClassName();
             checkBox=findViewById(checkBoxId);
             time=new myTimeUI[]{
                     new myTimeUI(start[0], start[1]),
@@ -398,12 +382,13 @@ public class MainActivity  extends AppCompatActivity  {
         }
 
         class myTimeUI {
-            private static final String className = "myTImeUI";
+            private String className = "";
             private Button button=null;
             private TextView text=null;
             private int timeIndex=0;
 
             myTimeUI(int  buttonId, int textViewId) {
+                className = getClassName();
                 button=findViewById(buttonId);
                 text=findViewById(textViewId);
 

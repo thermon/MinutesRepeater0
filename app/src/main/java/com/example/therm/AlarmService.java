@@ -20,9 +20,12 @@ import java.util.Calendar;
 import java.util.Locale;
 
 public class AlarmService extends Service {
-    private static final String className="AlarmService";
     // private Notification notification;
     minutesRepeat repeater = null;
+    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.US);
+    SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss", Locale.US);
+    SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
+    private String className = "AlarmService";
     // 繰り返し間隔、1分
     private long repeatPeriod = 1000*60;
     private int offset =-2;
@@ -45,6 +48,7 @@ public class AlarmService extends Service {
 
     @Override
     public void onCreate() {
+        className = myApplication.getClassName();
         super.onCreate();
         Log.d(className, "created");
         context = getApplicationContext();
@@ -82,55 +86,52 @@ public class AlarmService extends Service {
                     ", line " + ste[i].getLineNumber() + " of " + ste[i].getFileName());
         }
         */
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.US);
-        SimpleDateFormat sdf_HHmmss=new SimpleDateFormat("HH:mm:ss", Locale.US);
+
 //        Boolean stopFlag = intent.getBooleanExtra("StopAlarm", false);
 
-        // intentから情報を取り出す
-        Calendar t = (Calendar) (intent.getSerializableExtra("triggerTime"));
-        Log.d(className, String.format("intent time=%s",(t!=null) ? sdf_HHmmss.format(t.getTime()): "undefined"));
+        // アラーム時刻が設定されていないときはサービスを止める
+        if (intent == null ||
+                intent.getExtras() == null ||
+                !intent.getExtras().containsKey("triggerTime") ||
+                intent.getSerializableExtra("triggerTime") == null
+                ) {
+            // time = null;
+            stopAlarmService();
+        } else {
+            // intentから情報を取り出す
+            Calendar t = (Calendar) (intent.getSerializableExtra("triggerTime"));
+            Log.d(className, String.format("intent time=%s", (t != null) ? sdf_HHmmss.format(t.getTime()) : "undefined"));
 
-        zones = (int [][]) (intent.getSerializableExtra("zones"));
-        Gson gson = new Gson();
-        String z = intent.getStringExtra("zonesArray");
-        zonesArray = gson.fromJson(z, int[][][].class);
-        zonesEnable=intent.getBooleanArrayExtra("zonesEnable");
-        basedOnHour = intent.getBooleanExtra("basedOnHour",false);
-        intervalProgress = intent.getIntExtra("intervalProgress", 0);
+            zones = (int[][]) (intent.getSerializableExtra("zones"));
+            Gson gson = new Gson();
+            String z = intent.getStringExtra("zonesArray");
+            zonesArray = gson.fromJson(z, int[][][].class);
+            zonesEnable = intent.getBooleanArrayExtra("zonesEnable");
+            basedOnHour = intent.getBooleanExtra("basedOnHour", false);
+            intervalProgress = intent.getIntExtra("intervalProgress", 0);
 
-        repeater.setZonesArray(zonesArray);
-        repeater.setZonesEnable(zonesEnable);
-        repeater.setBasedOnHour(basedOnHour);
-        repeater.setIntervalProgress(intervalProgress);
+            repeater.setZonesArray(zonesArray);
+            repeater.setZonesEnable(zonesEnable);
+            repeater.setBasedOnHour(basedOnHour);
+            repeater.setIntervalProgress(intervalProgress);
 
-        // アラーム時刻が設定されていれば継続
-        if(t!=null){
-            boolean alarmTimeIsChanged=false;
+            boolean alarmTimeIsChanged;
             // 現在時刻がtimeを過ぎていた場合、次のアラーム時刻をtimeにセットする
             long now = System.currentTimeMillis();
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(now);
 //            now+= windowLengthMillis;  // 4秒進める
 
+            assert t != null;
             if (now >= t.getTimeInMillis()) {
                 Calendar next = repeater.getNextAlarmTime(cal);
 
                 if (next != null) {
-
                     // アラーム時刻が更新されたらtrue
-                    if (t.getTimeInMillis() != next.getTimeInMillis()) {
-                        alarmTimeIsChanged = true;
-                        time = next;
-
-                    } else {
-                        alarmTimeIsChanged = false;
-                        time = t;
-
-                    }
-                    setNextAlarmService(alarmTimeIsChanged,time);
+                    alarmTimeIsChanged = (t.getTimeInMillis() != next.getTimeInMillis());
+                    setNextAlarmService(alarmTimeIsChanged, alarmTimeIsChanged ? next : t);
 
                 } else {
-                    time = null;
                     stopAlarmService();
                 }
 
@@ -139,56 +140,20 @@ public class AlarmService extends Service {
                     // timeにCalendarインスタンスが未設定だったらtrue
                     alarmTimeIsChanged = true;
                 } else {
-                    if (intent.getStringExtra("from") == "") {
-                        if (t.getTimeInMillis() != time.getTimeInMillis()) {
-                            // AlarmServiceから呼ばれてなくて、時刻が違っていたらtrue
-                            alarmTimeIsChanged = true;
-                        }
+                    if (intent.getStringExtra("from").equals("")) {
+                        // AlarmServiceから呼ばれてなくて、時刻が違っていたらtrue
+                        alarmTimeIsChanged = (t.getTimeInMillis() != time.getTimeInMillis());
                     } else {
-                        if (t.getTimeInMillis() >= time.getTimeInMillis()) {
-                            // AlarmServiceから呼ばれてて、時刻が後になっていたら
-                            alarmTimeIsChanged = true;
-                        }
+                        // AlarmServiceから呼ばれてて、時刻が後になっていたら
+                        alarmTimeIsChanged = (t.getTimeInMillis() >= time.getTimeInMillis());
                     }
                 }
-                time = t;
+                //time = t;
 
-                setNextAlarmService(alarmTimeIsChanged,time);
+                setNextAlarmService(alarmTimeIsChanged, t);
 
             }
-        } else {
-            time = null;
-            stopAlarmService();
         }
-
-        Intent notificationIntent = new Intent(context, MainActivity.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
-        if (time != null) {
-            Notification notification = new NotificationCompat.Builder(getApplicationContext())
-                    .setSmallIcon(R.mipmap.ic_launcher_round) // アイコン
-                    .setTicker("ミニッツリピーター:次回通知時刻は" + sdf.format(time.getTime()) + "です。") // 通知バーに表示する簡易メッセージ
-                    .setWhen(System.currentTimeMillis()) // 時間
-                    .setContentTitle("ミニッツリピーター") // 展開メッセージのタイトル
-                    .setContentText("次回通知時刻：" + sdf.format(time.getTime())) // 展開メッセージの詳細メッセージ
-                    .setContentIntent(contentIntent) // PendingIntent
-                    .build();
-
-            notification.flags = Notification.FLAG_ONGOING_EVENT;
-            notificationManager.notify(R.string.app_name, notification);
-        } else {
-            Notification notification = new NotificationCompat.Builder(getApplicationContext())
-                    .setSmallIcon(R.mipmap.ic_launcher_round) // アイコン
-//                    .setTicker("Hello") // 通知バーに表示する簡易メッセージ
-                    .setWhen(System.currentTimeMillis()) // 時間
-                    .setContentTitle("ミニッツリピーター") // 展開メッセージのタイトル
-                    .setContentText("次回通知時刻：" + "undefined") // 展開メッセージの詳細メッセージ
-                    .setContentIntent(contentIntent) // PendingIntent
-                    .build();
-            notification.flags = 0;
-            notificationManager.cancel(R.string.app_name);
-        }
-        // repeater.releaseSound();
-        // repeater=null;
 
         //if (time!=null) time.add(Calendar.SECOND,offset);
         Log.d(className, String.format("Broadcast time=%s",(time!=null) ? sdf_HHmmss.format(time.getTime()): "undefined"));
@@ -199,13 +164,15 @@ public class AlarmService extends Service {
         messageIntent.putExtra("time",(time!=null) ? time.getTimeInMillis(): -1);
         LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
 
-        return super.onStartCommand(intent, flags, startId);
+        // return super.onStartCommand(intent, flags, startId);
+        return START_REDELIVER_INTENT;
     }
 
     // 次のアラームの設定
     private void setNextAlarmService(boolean b,Calendar cal){
         // intentはAlarmServiceクラス（つまり自分自身）に動作を遷移するよう設定する
         Intent intent = new Intent(context, AlarmService.class);
+        time = cal;
 
         Gson gson = new Gson();
         intent.putExtra("triggerTime", time);
@@ -221,8 +188,8 @@ public class AlarmService extends Service {
                 = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         if(alarmManager != null){
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
-            Log.d(className, "next AlarmService trigger time="+sdf.format( cal.getTimeInMillis()));
+
+            Log.d(className, "next AlarmService trigger time=" + sdf_yyyyMMddHHmmss.format(cal.getTimeInMillis()));
 
             // repeatPeriod間隔でAlarmServiceを起動する
             long startMillis;
@@ -245,7 +212,7 @@ public class AlarmService extends Service {
                 PendingIntent pendingIntent_ring
                         = PendingIntent.getBroadcast(context, 1, intent_ring,PendingIntent.FLAG_CANCEL_CURRENT);
 
-                Log.d(className, "next ringReceiver trigger time="+sdf.format(cal.getTimeInMillis()));
+                Log.d(className, "next ringReceiver trigger time=" + sdf_yyyyMMddHHmmss.format(cal.getTimeInMillis()));
                 // SDK 19 以下ではsetを使う
                 if (android.os.Build.VERSION.SDK_INT < 19) {
                     alarmManager.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),pendingIntent_ring);
@@ -255,6 +222,21 @@ public class AlarmService extends Service {
                 }
             }
         }
+
+        Intent notificationIntent = new Intent(context, MainActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+
+        Notification notification = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.mipmap.ic_launcher_round) // アイコン
+                .setTicker("ミニッツリピーター:次回通知時刻は" + sdf.format(time.getTime()) + "です。") // 通知バーに表示する簡易メッセージ
+                .setWhen(System.currentTimeMillis()) // 時間
+                .setContentTitle("ミニッツリピーター") // 展開メッセージのタイトル
+                .setContentText("次回通知時刻：" + sdf.format(time.getTime())) // 展開メッセージの詳細メッセージ
+                .setContentIntent(contentIntent) // PendingIntent
+                .build();
+
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
+        notificationManager.notify(R.string.app_name, notification);
 
         // 現在のRuntimeオブジェクトを取得
         Runtime rt = Runtime.getRuntime();
@@ -270,6 +252,7 @@ public class AlarmService extends Service {
 
     private void stopAlarmService(){
         Intent indent = new Intent(context, AlarmService.class);
+        time = null;
 
         PendingIntent pendingIntent = PendingIntent.getService(context, 0, indent, PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -288,6 +271,20 @@ public class AlarmService extends Service {
             alarmManager.cancel(pendingIntent_ring);
 
         }
+
+        Intent notificationIntent = new Intent(context, MainActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.mipmap.ic_launcher_round) // アイコン
+//                    .setTicker("Hello") // 通知バーに表示する簡易メッセージ
+                .setWhen(System.currentTimeMillis()) // 時間
+                .setContentTitle("ミニッツリピーター") // 展開メッセージのタイトル
+                .setContentText("次回通知時刻：" + "undefined") // 展開メッセージの詳細メッセージ
+                .setContentIntent(contentIntent) // PendingIntent
+                .build();
+        notification.flags = 0;
+        notificationManager.cancel(R.string.app_name);
+
         Log.d(className, "stop");
     }
 

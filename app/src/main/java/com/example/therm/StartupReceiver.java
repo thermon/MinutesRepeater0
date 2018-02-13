@@ -8,27 +8,28 @@ import android.util.Log;
 import java.util.Calendar;
 
 public class StartupReceiver extends BroadcastReceiver {
-    private static final String TAG = "StartupReceiver";
+    private String className = "StartupReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "onReceive:" + "startup");
+        className = myApplication.getClassName();
+        Log.d(className, "onReceive:" + "startup");
         if (intent != null) {
             boolean execute = false;
             if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
                 execute = true;
-            } else if (
-                    Intent.ACTION_PACKAGE_REPLACED.equals(intent.getAction()) &&
-                            intent.getDataString().contains(context.getPackageName())
-                    ) {
-                execute = true;
-            }
-            minutesRepeat repeatr = new minutesRepeat(context);
-            repeatr.loadData();
+            } else if (Intent.ACTION_PACKAGE_REPLACED.equals(intent.getAction()))
+                if (intent.getDataString() != null) {
+                    if (intent.getDataString().contains(context.getPackageName())) {
+                        execute = true;
+                    }
+                }
+            minutesRepeat repeater = new minutesRepeat(context);
+            repeater.loadData();
 
-            boolean b = repeatr.getExecuteOnBootCompleted();
+            boolean b = repeater.getExecuteOnBootCompleted();
             if (execute && b) {
-                repeatr.AlarmSet(Calendar.getInstance());
+                repeater.AlarmSet(Calendar.getInstance());
                 /*
                 Intent i = new Intent(context, AlarmService.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

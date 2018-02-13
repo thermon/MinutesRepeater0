@@ -6,14 +6,17 @@ import android.content.Intent;
 import android.util.Log;
 
 public class ringReceiver extends BroadcastReceiver {
-    minutesRepeat repeater = null;
+    // minutesRepeat repeater = null;
+    public String className;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("ringReceiver","called");
+        className = myApplication.getClassName();
+        Log.d(className, "called");
+        new ringAlarm(context);
 
-        if (repeater == null) repeater = new minutesRepeat(context);
-        repeater.ring();
+        //if (repeater == null) repeater = new minutesRepeat(context);
+        // repeater.ring();
         // repeater.releaseSound();
         // repeater=null;
 
