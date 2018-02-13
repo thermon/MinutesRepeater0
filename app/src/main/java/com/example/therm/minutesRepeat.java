@@ -1,7 +1,5 @@
 package com.example.therm;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,7 +10,6 @@ import android.media.SoundPool;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -21,20 +18,21 @@ import org.jetbrains.annotations.Contract;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.therm.MainActivity.PreferencesName;
 import static com.example.therm.MainActivity.timeButtonId;
-import static java.util.Arrays.*;
 
 // ミニッツリピーター鳴動クラス
 class minutesRepeat {
 
-
+    private final static int minutesOfHour = 60;
+    private final static int hoursOfDay = 24;
+    private final static int minutesOfDay = hoursOfDay * minutesOfHour;
+    static int myStreamId = AudioManager.STREAM_ALARM;
+    private static String className = "minutesRepeat";
     private final int resId[] = {
             R.raw.hour,
             R.raw.min15,
@@ -42,19 +40,16 @@ class minutesRepeat {
     };
     // 音関係の変数
     private SoundPool SoundsPool;
-    static int myStreamId= AudioManager.STREAM_ALARM;
     private int soundId[] = new int[resId.length];
-
     private int[] waitArray = new int[resId.length];
     private int wait0=400;  // 鳴動前ウェイト
     private int wait1=200;  // 鳴動中ベルの音が変わる時のウェイト
     private Context MainContext;
     private SharedPreferences sharedPreferences;
-
     private int[][][] zonesArray = new int[timeButtonId.length][][];
     private boolean[] zonesEnable = new boolean[timeButtonId.length];
     private int intervalProgress = 0;
-    private int intervalMinutes;
+    private int intervalMinutes = 2;
     private boolean basedOnHour = false;
     private boolean executeOnBootCompleted;
     /*
@@ -64,11 +59,8 @@ class minutesRepeat {
 
         }
         */
-    private Handler myHandler;
-
-    private final static int minutesOfHour = 60;
-    private final static int hoursOfDay = 24;
-    private final static int minutesOfDay=hoursOfDay * minutesOfHour;
+    private HandlerThread mHT;
+    private Handler mHandler;
 
     // コンストラクター
     minutesRepeat(Context context) {
@@ -76,7 +68,7 @@ class minutesRepeat {
         sharedPreferences = MainContext.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE);
 
         // AudioManagerを取得する
-        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        AudioManager am = (AudioManager) MainContext.getSystemService(Context.AUDIO_SERVICE);
 
         if (am != null) {
             // 現在の音量を取得する
@@ -88,7 +80,6 @@ class minutesRepeat {
             // 音量を設定する
             am.setStreamVolume(myStreamId, ringVolume, 0);
         }
-        intervalMinutes = 2;
     }
 
     private void soundLoad() {
@@ -125,7 +116,7 @@ class minutesRepeat {
             waitArray[i] = mp.getDuration();
             mp.release();
         }
-
+        Log.d(className, "SoundPool created.");
     }
     int[][][] getZonesArray() {
         return zonesArray;
@@ -409,6 +400,7 @@ class minutesRepeat {
      }
     // リピーター音を鳴らす処理
     void ring() {
+
         soundLoad();
 
         Calendar cal = Calendar.getInstance();
@@ -422,50 +414,100 @@ class minutesRepeat {
 //        int count[] = {hour, min_15, min_1}; // 鳴動回数
         final int count[] = {hour, minArray[0],minArray[1]}; // 鳴動回数
 
-        try {
-            TimeUnit.MILLISECONDS.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        HandlerThread mHT=new HandlerThread("repeater");
+        mHT = new HandlerThread("repeater");
         mHT.start();
-
-        Handler mHandler=new Handler(mHT.getLooper());
+        mHandler = new Handler(mHT.getLooper());
 
         Integer errorCount=0;
 
+        // 全部をlooperに突っ込む場合
         int wait=wait0;
         for (int k = 0; k < resId.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
 //            Log.d("debug", "k=" + k);
+            if (count[k] <= 0) continue;
+            // カウントする場合
+            final int[] mStreamId = new int[1];
+            final int sid = soundId[k];
+            final int mCount = count[k];
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mStreamId[0] = SoundsPool.play(sid, 1.0f, 1.0f, 0, mCount - 1, 1.0f);
+                }
+            }, wait);
+            wait += waitArray[k] * count[k] + wait1;
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    SoundsPool.stop(mStreamId[0]);
+                    SoundsPool.unload(sid);
+                }
+            }, wait);
+        }
 
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                for (int aSoundId : soundId) {
+                    SoundsPool.unload(aSoundId);
+                }
+                SoundsPool.release();
+            }
+        }, wait);
 
-            if (count[k] > 0) {   // カウントする場合
-                final int finalK = k;
-                final int[] play = {0};
+        // 一音ずつ鳴らす場合
+        /*
+        int wait=wait0;
+        for (int k = 0; k < resId.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
+            //            Log.d("debug", "k=" + k);
+            if (count[k] <= 0) continue;
+            // カウントする場合
+            int play = 0;
+            final int sid = soundId[k];
+            final int thisWait=waitArray[k];
+            for (int i = 0; i < count[k]; i++) {
+
                 mHandler.postDelayed(new Runnable() {
                      @Override
                      public void run() {
-                         while (play[0] == 0) {
-                             play[0] = SoundsPool.play(soundId[finalK], 1.0f, 1.0f, 0, count[finalK] - 1, 1.0f);
+                         int play=SoundsPool.play(sid, 1.0f, 1.0f, 0, 0, 1.0f);
+                         try {
+                             TimeUnit.MILLISECONDS.sleep(thisWait);
+                         } catch (InterruptedException e) {
+                             e.printStackTrace();
                          }
+                         SoundsPool.stop(play);
                      }
                  }
-                , wait);
-                wait+=waitArray[k] * count[k] + wait1;
-                if (play[0]<0) errorCount--;
+             , wait);
+
+            wait += waitArray[k];
             }
+            wait+=wait1;
         }
+        */
+
+        Log.d(className, "ring.");
     }
 
-    void releaseSound() {
-        for (int aSoundId : soundId) {
-            SoundsPool.unload(aSoundId);
+    void soundRelease() {
+        if (SoundsPool != null) {
+            int wait = wait0;
+            int count[] = {12, 3, 14};
+            for (int k = 0; k < resId.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
+                wait += waitArray[k] * count[k] + wait1;
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(wait);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            for (int aSoundId : soundId) {
+                SoundsPool.unload(aSoundId);
+            }
+            SoundsPool.release();
+            SoundsPool = null;
+            Log.d(className, "SoundPool released.");
         }
-        SoundsPool.release();
-//        SoundsPool=null;
     }
-
-
-
 }

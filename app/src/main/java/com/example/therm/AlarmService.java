@@ -7,32 +7,27 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
-import android.os.Environment;
+import android.os.Debug;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.Set;
-
-import static android.content.ContentValues.TAG;
 
 public class AlarmService extends Service {
     private static final String className="AlarmService";
+    // private Notification notification;
+    minutesRepeat repeater = null;
     // 繰り返し間隔、1分
     private long repeatPeriod = 1000*60;
     private int offset =-2;
     // setWindow()でのwindow幅、4秒
     private long windowLengthMillis = 1000*4;
-
     private Context context;
     //    private int [][] zones;
     private int[][][] zonesArray;
@@ -42,8 +37,7 @@ public class AlarmService extends Service {
     private boolean basedOnHour;
     private int intervalProgress;
     private NotificationManager notificationManager;
-    // private Notification notification;
-//    minutesRepeat repeater=null;
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -55,6 +49,7 @@ public class AlarmService extends Service {
         Log.d(className, "created");
         context = getApplicationContext();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // if (repeater==null) repeater = new minutesRepeat(context);
     }
 
 
@@ -67,9 +62,7 @@ public class AlarmService extends Service {
     // Alarm によって呼び出される
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        // if (repeater==null)
-            minutesRepeat repeater = new minutesRepeat(context);
+        repeater = new minutesRepeat(context);
             /*
         Log.d(className, "start");
         Bundle bundle = intent.getExtras();
@@ -266,7 +259,8 @@ public class AlarmService extends Service {
         // 現在のRuntimeオブジェクトを取得
         Runtime rt = Runtime.getRuntime();
         // システムメモリ内の空きバイト数の見積もりを返す
-        Log.d(className,String.format("before GC memory=%d",rt.freeMemory()));
+        Log.d(className, String.format("runtime free  memory=%d", rt.freeMemory()));
+        Log.d(className, String.format("native heap free memory=%d", Debug.getNativeHeapFreeSize()));
 
         // gcを走らせる
         // rt.gc();

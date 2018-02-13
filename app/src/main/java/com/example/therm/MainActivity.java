@@ -1,7 +1,6 @@
 package com.example.therm;
 
 import android.app.AlarmManager;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
@@ -15,8 +14,6 @@ import android.os.HandlerThread;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseArray;
-import android.util.SparseIntArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -35,10 +32,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static com.example.therm.R.id.nowTime;
 
@@ -47,6 +40,20 @@ public class MainActivity  extends AppCompatActivity  {
     public static final int[] intervalList = {2, 3, 4, 5, 6, 10, 12, 15, 20, 30};
     // 最長鳴動間隔
     public static final int[] intervalMin = {1, intervalList[0]};
+    public static final int timeButtonId[][][] = new int[][][]
+            {
+                    {
+                            {R.id.TimeZone1_Enable},
+                            {R.id.TimeZone1_Start, R.id.TimeZone1_Start_Text},
+                            {R.id.TImeZone1_End, R.id.TimeZone1_End_Text}
+
+                    },
+                    {
+                            {R.id.TimeZone2_Enable},
+                            {R.id.TimeZone2_Start, R.id.TimeZone2_Start_Text},
+                            {R.id.TImeZone2_End, R.id.TImeZone2_End_Text}
+                    }
+            };
     static public String PreferencesName = "minutesRepeater";
     public final int seekBarMax[] = {60-intervalMin[0], intervalList.length - 1};
     // 時刻表示のフォーマット
@@ -57,27 +64,9 @@ public class MainActivity  extends AppCompatActivity  {
     // 音関係の変数
     public minutesRepeat repeater;
     public Handler repeaterHandler;
-    public AlarmManager am = null;
 
     // 時間帯
-
-    public static final int timeButtonId[][][] =new int [][][]
-    {
-        {
-            {R.id.TimeZone1_Enable},
-            {R.id.TimeZone1_Start,   R.id.TimeZone1_Start_Text} ,
-            {R.id.TImeZone1_End,     R.id.TimeZone1_End_Text}
-
-        },
-        {
-            {R.id.TimeZone2_Enable},
-            {R.id.TimeZone2_Start,   R.id.TimeZone2_Start_Text},
-            {R.id.TImeZone2_End,     R.id.TImeZone2_End_Text}
-        }
-    };
-
-    private myTimeZoneUI timeButtonIdClass[];
-
+    public AlarmManager am = null;
       public int[][][] zonesArray= new int[timeButtonId.length][2][2];
     public boolean [] zonesEnable= new boolean[timeButtonId.length];
     public int seekBarProgress = 0;
@@ -85,11 +74,53 @@ public class MainActivity  extends AppCompatActivity  {
     public boolean BasedOnMinute_00 = false;
     public boolean executeOnBootCompleted;
     public SimpleDateFormat sd = new SimpleDateFormat("HH:mm", Locale.US);
+    private myTimeZoneUI timeButtonIdClass[];
+    // 鳴動間隔調整用ボタンのリスナー
+    private View.OnClickListener intervalButton = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            int oldValue = seekBarProgress;
+            int i = view.getId();
+            if (i == R.id.intervalDecrease) {
+                seekBarProgress--;
+                if (seekBarProgress < 0) seekBarProgress = 0;
+            } else if (i == R.id.intervalIncrease) {
+                seekBarProgress++;
+                int idx = BasedOnMinute_00 ? 1 : 0;
+                if (seekBarProgress > seekBarMax[idx]) seekBarProgress = seekBarMax[idx];
+            }
+            Log.d("IntervalButton", "seekBar Changed from " + oldValue + " to " + seekBarProgress);
+            ((SeekBar) findViewById(R.id.intervalSeekBar)).setProgress(seekBarProgress);
+
+            // setIntervalValue(seekBarProgress, BasedOnMinute_00);
+            Log.d("intervalButton", "call AlarmSet()");
+            repeater.AlarmSet(Calendar.getInstance());
+        }
+    };
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("main:Receiver", "receive : " + intent.getAction());
+            String message = intent.getStringExtra("Message");
+            Log.d("main:Receiver", "Message : " + message);
+            ((TextView) findViewById(R.id.nextTime)).setText(message);
+            long time = intent.getLongExtra("time", -1);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
+            Log.d("main:Receiver", "time : " + sdf.format(time));
+
+            am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            Intent intent_ring = new Intent(getApplication(), minutesRepeat.class);
+            PendingIntent sender = PendingIntent.getBroadcast(getApplication(), 0, intent_ring, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        }
+    };
 
     // 初期化ブロック
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        new myApplication();
+
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
@@ -286,9 +317,9 @@ public class MainActivity  extends AppCompatActivity  {
             mTimer.cancel();
             mTimer = null;
         }
-        repeater.releaseSound();
+//        repeater.releaseSound();
+        repeater = null;
     }
-
 
     public void getFieldValues() {
         ((ToggleButton) findViewById(R.id.runOnBootComplete)).setChecked(executeOnBootCompleted);
@@ -325,52 +356,11 @@ public class MainActivity  extends AppCompatActivity  {
         }
     }
 
-    // 鳴動間隔調整用ボタンのリスナー
-    private View.OnClickListener intervalButton = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            int oldValue = seekBarProgress;
-            int i = view.getId();
-            if (i == R.id.intervalDecrease) {
-                seekBarProgress--;
-                if (seekBarProgress < 0) seekBarProgress = 0;
-            } else if (i == R.id.intervalIncrease) {
-                seekBarProgress++;
-                int idx = BasedOnMinute_00 ? 1 : 0;
-                if (seekBarProgress > seekBarMax[idx]) seekBarProgress = seekBarMax[idx];
-            }
-            Log.d("IntervalButton", "seekBar Changed from " + oldValue + " to " + seekBarProgress);
-            ((SeekBar) findViewById(R.id.intervalSeekBar)).setProgress(seekBarProgress);
-
-            // setIntervalValue(seekBarProgress, BasedOnMinute_00);
-            Log.d("intervalButton", "call AlarmSet()");
-            repeater.AlarmSet(Calendar.getInstance());
-        }
-    };
-
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("main:Receiver", "receive : " + intent.getAction());
-            String message = intent.getStringExtra("Message");
-            Log.d("main:Receiver", "Message : " + message);
-            ((TextView) findViewById(R.id.nextTime)).setText(message);
-            long time = intent.getLongExtra("time", -1);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
-            Log.d("main:Receiver", "time : " + sdf.format(time));
-
-            am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            Intent intent_ring = new Intent(getApplication(), minutesRepeat.class);
-            PendingIntent sender = PendingIntent.getBroadcast(getApplication(), 0, intent_ring, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        }
-    };
-
     class myTimeZoneUI {
+        private static final String className = "myTimeZoneUI";
+        int zoneIndex = 0;
         private CheckBox checkBox;
         private myTimeUI time[]=null;
-        int zoneIndex=0;
-        private static final String className="myTimeZoneUI";
 
         myTimeZoneUI(int checkBoxId,int start[],int end[] ){
 
@@ -408,10 +398,10 @@ public class MainActivity  extends AppCompatActivity  {
         }
 
         class myTimeUI {
+            private static final String className = "myTImeUI";
             private Button button=null;
             private TextView text=null;
             private int timeIndex=0;
-            private static final String className="myTImeUI";
 
             myTimeUI(int  buttonId, int textViewId) {
                 button=findViewById(buttonId);
