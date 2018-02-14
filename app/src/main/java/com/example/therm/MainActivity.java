@@ -60,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     // 時刻表示のフォーマット
     final SimpleDateFormat mSimpleDataFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
     public Timer mTimer;
-    public Timer mTimer2;
     public Handler mHandler;
     // 音関係の変数
     public minutesRepeat repeater;
@@ -68,15 +67,13 @@ public class MainActivity extends AppCompatActivity {
 
     // 時間帯
     public AlarmManager am = null;
-    public int[][][] zonesArray = new int[timeButtonId.length][2][2];
-    public boolean[] zonesEnable = new boolean[timeButtonId.length];
+    //    public int[][][] zonesArray = new int[timeButtonId.length][2][2];
+//    public boolean[] zonesEnable = new boolean[timeButtonId.length];
     public int seekBarProgress = 0;
     public int intervalMinutes = 2;
     public boolean BasedOnMinute_00 = false;
     public boolean executeOnBootCompleted;
     public SimpleDateFormat sd = new SimpleDateFormat("HH:mm", Locale.US);
-    //    private myTimeZoneUI timeButtonIdClass[];
-    private myTimeZoneArray timeZoneArray;
     // 鳴動間隔調整用ボタンのリスナー
     private View.OnClickListener intervalButton = new View.OnClickListener() {
         @Override
@@ -140,8 +137,6 @@ public class MainActivity extends AppCompatActivity {
         repeater = new minutesRepeat(this);
         repeater.loadData();
 
-        zonesArray = repeater.getZonesArray();
-        zonesEnable = repeater.getZonesEnable();
         seekBarProgress = repeater.getIntervalProgress();
         BasedOnMinute_00 = repeater.getBasedOnHour();
         executeOnBootCompleted = repeater.getExecuteOnBootCompleted();
@@ -151,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
         // フィールドの値から変数を初期化
         getFieldValues();
+        /*
         for (int i = 0; i < zonesArray.length; i++) {
             for (int j = 0; j < 2; j++) {
                 for (int k = 0; k < 2; k++) {
@@ -158,23 +154,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-
-        timeZoneArray = new myTimeZoneArray(zonesEnable, zonesArray, timeButtonId);
-        /*
-        timeButtonIdClass = new myTimeZoneUI[timeButtonId.length];
-
-        for (int i = 0; i < timeButtonId.length; i++) {
-            timeButtonIdClass[i] = new myTimeZoneUI(
-                    timeButtonId[i][0][0],
-                    timeButtonId[i][1],
-                    timeButtonId[i][2],
-                    zonesArray[i],
-                    zonesEnable[i]
-            );
-            timeButtonIdClass[i].zoneIndex = i;
-        }
 */
-        //       intervalNum = findViewById(R.id.intervalNumber);
+        myTimeZoneArray timeZoneArray = new myTimeZoneArray(
+                repeater.getZonesEnable(),
+                repeater.getZonesArray(),
+                timeButtonId
+        );
+
         Log.d("onCreate", "call AlarmSet()");
 
         // UIスレッドにpost(Runnable)やsendMessage(message)を送りつけるハンドラーを作成
@@ -340,35 +326,23 @@ public class MainActivity extends AppCompatActivity {
 
     class myTimeZoneArray {
         //private myTimeZoneUI zones[]=new myTimeZoneUI[timeButtonId.length];
-        private ArrayList<myTimeZoneUI> zonesList = new ArrayList<>();
+        private ArrayList<myTimeZoneUI> zonesList = new ArrayList<>(timeButtonId.length);
         private int timeZoneTable[][][];
         private boolean enableArray[];
         private String className;
 
-        public myTimeZoneArray(boolean enable[], int timeZone[][][], int timeButtonArray[][][]) {
+        myTimeZoneArray(boolean enable[], int timeZone[][][], int timeButtonArray[][][]) {
             className = myApplication.getClassName();
             timeZoneTable = timeZone;
             enableArray = enable;
             for (int i = 0; i < timeButtonId.length; i++) {
-                /*
-                zones[i] = new myTimeZoneUI(
-                        this,
-                        i,
-                        enable[i],
-                        timeZone[i],
-                        timeButtonArray[i]
+                zonesList.add(
+                        new myTimeZoneUI(this, enable[i], timeZone[i], timeButtonArray[i])
                 );
-                */
-                zonesList.add(new myTimeZoneUI(
-                        this,
-                        enable[i],
-                        timeZone[i],
-                        timeButtonArray[i]
-                ));
             }
         }
 
-        public void pushTimeZone(myTimeZoneUI timeZoneUI) {
+        void pushTimeZone(myTimeZoneUI timeZoneUI) {
             int index = zonesList.indexOf(timeZoneUI);
             if (index >= 0) timeZoneTable[index] = timeZoneUI.timeZone;
             for (int i = 0; i < timeZoneTable.length; i++) {
@@ -382,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
             repeater.AlarmSet(Calendar.getInstance());
         }
 
-        public void pushEnable(myTimeZoneUI timeZoneUI) {
+        void pushEnable(myTimeZoneUI timeZoneUI) {
             int index = zonesList.indexOf(timeZoneUI);
             if (index >= 0) enableArray[index] = timeZoneUI.enable;
             for (int i = 0; i < enableArray.length; i++) {
@@ -392,12 +366,11 @@ public class MainActivity extends AppCompatActivity {
             repeater.AlarmSet(Calendar.getInstance());
         }
 
-        // TODO myTimeZoneUIにzonesEnableを入力するようにする
         class myTimeZoneUI {
             private String className;
             private CheckBox checkBox;
             //private myTimeUI timeUI[] = new myTimeUI[2];
-            private ArrayList<myTimeUI> timeUIList = new ArrayList<>();
+            private ArrayList<myTimeUI> timeUIList = new ArrayList<>(2);
             private int timeZone[][];
             private myTimeZoneArray folderClass;
             private boolean enable;
@@ -426,8 +399,6 @@ public class MainActivity extends AppCompatActivity {
                         folderClass.pushEnable(self);
                     }
                 });
-
-
             }
 
             private void pushTime(myTimeUI timeUI) {
@@ -437,57 +408,51 @@ public class MainActivity extends AppCompatActivity {
             }
 //            private void pushTime(int timeIndex, int mTime[]) {
 
-
             class myTimeUI {
                 private String className = "";
                 private Button button = null;
                 private TextView text = null;
+                View.OnClickListener buttonListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        try {
+                            Date d = sd.parse((String) text.getText());
+                            // 時刻入力ダイアログの処理
+                            TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
+                            dialog.show();
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
                 private myTimeZoneUI folderClass;
                 private int time[];
+                private myTimeUI self;
+                TimePickerDialog.OnTimeSetListener timeListener = new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
+                        Log.d(className, String.format("time changed to %02d:%02d", hourOfDay, minute));
+                        text.setText(String.format(Locale.US, "%02d:%02d", hourOfDay, minute));
+                        time = new int[]{hourOfDay, minute};
+
+                        // folderClass.pushTime(folderClassIndex, new int[]{hourOfDay, minute});
+                        folderClass.pushTime(self);
+                    }
+                };
 
                 myTimeUI(final myTimeZoneUI parent, int hourAndMinute[], int ids[]) {
                     className = getClassName();
-
                     time = hourAndMinute;
                     button = findViewById(ids[0]);
                     text = findViewById(ids[1]);
-                    text.setText(String.format(Locale.US, "%02d:%02d", time[0], time[1]));
                     folderClass = parent;
-                    final myTimeUI self = this;
+                    self = this;
 
+                    text.setText(String.format(Locale.US, "%02d:%02d", time[0], time[1]));
 
                     // 時間帯入力用のリスナー
-                    button.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            try {
-                                Date d = sd.parse((String) text.getText());
-                                // 時刻入力ダイアログの処理
-                                TimePickerDialog dialog = new TimePickerDialog(
-                                    MainActivity.this,
-                                    new TimePickerDialog.
-                                            OnTimeSetListener() {
-                                        @Override
-                                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
-                                            Log.d(className, String.format("time changed to %02d:%02d", hourOfDay, minute));
-                                            text.setText(String.format(Locale.US, "%02d:%02d", hourOfDay, minute));
-                                            time[0] = hourOfDay;
-                                            time[1] = minute;
-
-                                            // folderClass.pushTime(folderClassIndex, new int[]{hourOfDay, minute});
-                                            folderClass.pushTime(self);
-                                        }
-                                    },
-                                        d.getHours(), d.getMinutes(), true
-                                );
-                                dialog.show();
-
-                            } catch (ParseException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
+                    button.setOnClickListener(buttonListener);
                 }
             }
         }

@@ -46,7 +46,7 @@ class ringAlarm {
             // 音量を設定する
             am.setStreamVolume(myStreamId, ringVolume, 0);
         }
-        soundLoad(context);
+
 
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
@@ -58,6 +58,7 @@ class ringAlarm {
 
 //        int count[] = {hour, min_15, min_1}; // 鳴動回数
         final int count[] = {hour, minArray[0], minArray[1]}; // 鳴動回数
+        soundLoad(context, count);
 
         mHT = new HandlerThread("repeater");
         mHT.start();
@@ -108,7 +109,7 @@ class ringAlarm {
         Log.d(className, "ring.");
     }
 
-    private void soundLoad(Context context) {
+    private void soundLoad(Context context, int counts[]) {
         // 音読み込み
         //ロリポップより前のバージョンに対応するコード
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -134,6 +135,7 @@ class ringAlarm {
 
         //あらかじめ音をロードする必要がある　※直前にロードしても間に合わないので早めに
         for (int i = 0; i < resId.length; i++) {
+            if (counts[i] <= 0) continue;
             int id = SoundsPool.load(
                     context, resId[i], 1);
             soundId[i] = id;
