@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">ミニッツリピーター</string>
 
-    <string name="switch_RepeaterByTime">リピーターを鳴らす</string>
-    <string name="text_RepeaterInterval">リピーターを鳴らす間隔</string>
+    <string name="switch_RepeaterByTime">一定時間ごとにリピーターを鳴らす</string>
+    <string name="text_RepeaterInterval">リピーターを鳴らす間隔(分)</string>
 
     <string name="radioButton_Interval2">2分</string>
     <string name="radioButton_Interval3">3分</string>
@@ -12,9 +12,9 @@
     <string name="radioButton_Interval10">10分</string>
     <string name="radioButton_Interval12">12分</string>
     <string name="radioButton_Interval15">15分</string>
-    <string name="radioButton_Interva20">20分</string>
-    <string name="radioButton_Interva30">30分</string>
-    <string name="radioButton_Interva60">60分</string>
+    <string name="radioButton_Interval20">20分</string>
+    <string name="radioButton_Interval30">30分</string>
+    <string name="radioButton_Interval60">60分</string>
 
     <string name="checkBox_Time1">時間帯1を使用する</string>
     <string name="checkBox_Time2">時間帯2を使用する</string>
@@ -28,4 +28,17 @@
     <string name="textView_StartTime2">12:00</string>
     <string name="textView_EndTime1">11:59</string>
     <string name="textView_EndTime2">23:59</string>
+
+    <string name="button_SoundTest">現在時刻テスト／音量調整</string>
+    <string name="checkbox_ReferencedToTheHour">正時を基準にする</string>
+    <string name="textView_NextTimeText">次回鳴動時刻</string>
+    <string name="textView_NowTime">00:00:00</string>
+    <string name="textView_NextTime">undefined</string>
+    <string name="textView_NowTimeText">現在時刻</string>
+    <string name="decrease">＜</string>
+    <string name="increase">＞</string>
+    <string name="_60">60</string>
+    <string name="executeOnBootComplete">起動時に自動実行</string>
+    <string name="executeOnBootComplete_off">起動時に常駐する</string>
+    <string name="executeOnBootComplete_on">起動時に常駐しない</string>
 </resources>
