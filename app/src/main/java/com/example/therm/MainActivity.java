@@ -159,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
 
         // UIスレッドにpost(Runnable)やsendMessage(message)を送りつけるハンドラーを作成
         mHandler = new Handler(getMainLooper());
-
         repeater.AlarmSet(Calendar.getInstance());
 
         ((ToggleButton) findViewById(R.id.runOnBootComplete)).setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
@@ -273,9 +272,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         // 現在時刻表示
-
         mTimer = new Timer();        // 一秒ごとに定期的に実行します。
 
         mTimer.schedule(new TimerTask() {
@@ -412,6 +409,19 @@ public class MainActivity extends AppCompatActivity {
                 private String className = "";
                 private Button button = null;
                 private TextView text = null;
+                View.OnClickListener buttonListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        try {
+                            Date d = sd.parse((String) text.getText());
+                            // 時刻入力ダイアログの処理
+                            TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
+                            dialog.show();
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
                 private myTimeZoneUI folderClass;
                 private int time[];
                 private myTimeUI self;
@@ -427,19 +437,6 @@ public class MainActivity extends AppCompatActivity {
 
                         // folderClass.pushTime(folderClassIndex, new int[]{hourOfDay, minute});
                         folderClass.pushTime(self);
-                    }
-                };
-                View.OnClickListener buttonListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        try {
-                            Date d = sd.parse((String) text.getText());
-                            // 時刻入力ダイアログの処理
-                            TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
-                            dialog.show();
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
                     }
                 };
 
