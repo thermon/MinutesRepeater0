@@ -126,10 +126,7 @@ class minutesRepeat {
         if (zonesArray == null) {
             zonesArray = new int[MainActivity.timeButtonId.length][][];
             for (int i = 0; i < zonesArray.length; i++) {
-                zonesArray[i] = new int [][]
-                {
-                    {0,0},{0,0}
-                };
+                zonesArray[i] = new int[][]{{0, 0}, {0, 0}};
             }
         }
         if (zonesEnable == null) zonesEnable = new boolean[MainActivity.timeButtonId.length];
