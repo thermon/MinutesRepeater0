@@ -200,10 +200,13 @@ public class AlarmService extends Service {
             startMillis+=repeatPeriod - startMillis % repeatPeriod;
             // SDK 19 以下ではsetを使う
             if(android.os.Build.VERSION.SDK_INT < 19) {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, startMillis, pendingIntent);
+                alarmManager.set(AlarmManager.RTC_WAKEUP,
+                        //startMillis,
+                        cal.getTimeInMillis() + 2 * 1000, pendingIntent);
             } else{
                 alarmManager.setWindow(AlarmManager.RTC_WAKEUP,
-                        startMillis, windowLengthMillis, pendingIntent);
+//                        startMillis
+                        cal.getTimeInMillis() + 2 * 1000, windowLengthMillis, pendingIntent);
             }
 
             // 現在時刻がtimeを過ぎていた場合、次のアラーム時刻をtimeにセットする
