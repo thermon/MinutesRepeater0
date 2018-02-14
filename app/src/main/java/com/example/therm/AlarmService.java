@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Debug;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
@@ -124,29 +123,33 @@ public class AlarmService extends Service {
 
             assert t != null;
             if (now >= t.getTimeInMillis()) {
+                // 起動時刻を過ぎた
                 Calendar next = repeater.getNextAlarmTime(cal);
+                Log.d(className, String.format("next alarm time=%s", (next != null) ? sdf_HHmmss.format(next.getTime()) : "undefined"));
 
                 if (next != null) {
-                    // アラーム時刻が更新されたらtrue
+                    // アラーム時刻が更新された
                     alarmTimeIsChanged = (t.getTimeInMillis() != next.getTimeInMillis());
                     setNextAlarmService(alarmTimeIsChanged, alarmTimeIsChanged ? next : t);
 
                 } else {
+                    // アラーム時刻未設定
                     stopAlarmService();
                 }
 
             } else {
-                if (time == null){
-                    // timeにCalendarインスタンスが未設定だったらtrue
-                    alarmTimeIsChanged = true;
+                // 起動時刻を過ぎていない
+                Log.d(className, String.format("elder time=%s", (time != null) ? sdf_HHmmss.format(time.getTime()) : "undefined"));
+                if (intent.getBooleanExtra("loop", false)) {
+                    // AlarmServiceから呼ばれてて、時刻が後になっていたら
+                    alarmTimeIsChanged = (time == null || t.getTimeInMillis() > time.getTimeInMillis());
+                    if (time == null || t.getTimeInMillis() > time.getTimeInMillis())
+                        Log.d(className, "time changed(called by Service)");
                 } else {
-                    if (intent.getStringExtra("from").equals("")) {
-                        // AlarmServiceから呼ばれてなくて、時刻が違っていたらtrue
-                        alarmTimeIsChanged = (t.getTimeInMillis() != time.getTimeInMillis());
-                    } else {
-                        // AlarmServiceから呼ばれてて、時刻が後になっていたら
-                        alarmTimeIsChanged = (t.getTimeInMillis() >= time.getTimeInMillis());
-                    }
+                    // AlarmServiceから呼ばれてなくて、時刻が違っていたらtrue
+                    alarmTimeIsChanged = (time == null || t.getTimeInMillis() != time.getTimeInMillis());
+                    if (time == null || t.getTimeInMillis() != time.getTimeInMillis())
+                        Log.d(className, "time changed(called by other)");
                 }
                 //time = t;
 
@@ -180,7 +183,7 @@ public class AlarmService extends Service {
         intent.putExtra("zonesEnable", zonesEnable);
         intent.putExtra("basedOnHour", basedOnHour);
         intent.putExtra("intervalProgress", intervalProgress);
-        intent.putExtra("from",className);
+        intent.putExtra("loop", true);
         PendingIntent pendingIntent
                 = PendingIntent.getService(context, 0, intent,PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -238,12 +241,13 @@ public class AlarmService extends Service {
         notification.flags = Notification.FLAG_ONGOING_EVENT;
         notificationManager.notify(R.string.app_name, notification);
 
+        /*
         // 現在のRuntimeオブジェクトを取得
         Runtime rt = Runtime.getRuntime();
         // システムメモリ内の空きバイト数の見積もりを返す
         Log.d(className, String.format("runtime free  memory=%d", rt.freeMemory()));
         Log.d(className, String.format("native heap free memory=%d", Debug.getNativeHeapFreeSize()));
-
+*/
         // gcを走らせる
         // rt.gc();
         // システムメモリ内の空きバイト数の見積もりを返す

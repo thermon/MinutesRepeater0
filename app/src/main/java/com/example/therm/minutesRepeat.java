@@ -154,13 +154,13 @@ class minutesRepeat {
     }
     Calendar getNextAlarmTime(Calendar time) {
         int interval = getIntervalValue();
-
+/*
         StackTraceElement[] ste = new Throwable().getStackTrace();
         for (int i = 1; i < 2; i++) {
             Log.d("getNextAlarmTime", "called:" + ste[i].getClassName() + "." + ste[i].getMethodName() +
                     ", line " + ste[i].getLineNumber() + " of " + ste[i].getFileName());
         }
-
+*/
         SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
         Log.d("getNextAlarmTime", "now=" + sdf2.format(time.getTime()));
