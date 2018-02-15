@@ -16,14 +16,13 @@ import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 
 public class AlarmService extends Service {
+    private static SimpleDateFormat sdf_HHmm = MainActivity.sdf_HHmm;
+    private static SimpleDateFormat sdf_HHmmss = MainActivity.sdf_HHmmss;
+    private static SimpleDateFormat sdf_yyyyMMddHHmmss = MainActivity.sdf_yyyyMMddHHmmss;
     // private Notification notification;
     minutesRepeat repeater = null;
-    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.US);
-    SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss", Locale.US);
-    SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
     private String className = "AlarmService";
     // 繰り返し間隔、1分
     private long repeatPeriod = 1000*60;
@@ -234,10 +233,10 @@ public class AlarmService extends Service {
 
         Notification notification = new NotificationCompat.Builder(getApplicationContext())
                 .setSmallIcon(R.mipmap.ic_launcher_round) // アイコン
-                .setTicker("ミニッツリピーター:次回通知時刻は" + sdf.format(time.getTime()) + "です。") // 通知バーに表示する簡易メッセージ
+                .setTicker("ミニッツリピーター:次回通知時刻は" + sdf_HHmm.format(time.getTime()) + "です。") // 通知バーに表示する簡易メッセージ
                 .setWhen(System.currentTimeMillis()) // 時間
                 .setContentTitle("ミニッツリピーター") // 展開メッセージのタイトル
-                .setContentText("次回通知時刻：" + sdf.format(time.getTime())) // 展開メッセージの詳細メッセージ
+                .setContentText("次回通知時刻：" + sdf_HHmm.format(time.getTime())) // 展開メッセージの詳細メッセージ
                 .setContentIntent(contentIntent) // PendingIntent
                 .build();
 

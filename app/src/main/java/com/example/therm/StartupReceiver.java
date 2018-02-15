@@ -15,26 +15,39 @@ public class StartupReceiver extends BroadcastReceiver {
         className = myApplication.getClassName();
         Log.d(className, "onReceive:" + "startup");
         if (intent != null) {
-            boolean execute = false;
-            if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-                execute = true;
-            } else if (Intent.ACTION_PACKAGE_REPLACED.equals(intent.getAction()))
-                if (intent.getDataString() != null) {
-                    if (intent.getDataString().contains(context.getPackageName())) {
-                        execute = true;
+            String action = intent.getAction();
+            boolean bootCompletedExecute = false;
+            boolean timeChangedExecute = false;
+
+            switch (action) {
+                case Intent.ACTION_BOOT_COMPLETED:
+                    bootCompletedExecute = true;
+                    break;
+                case Intent.ACTION_PACKAGE_REPLACED:
+                    if (intent.getDataString() != null) {
+                        if (intent.getDataString().contains(context.getPackageName())) {
+                            bootCompletedExecute = true;
+                        }
                     }
-                }
+                    break;
+                case Intent.ACTION_TIME_CHANGED:
+                case Intent.ACTION_TIMEZONE_CHANGED:
+                    timeChangedExecute = true;
+                    break;
+            }
             minutesRepeat repeater = new minutesRepeat(context);
             repeater.loadData();
 
             boolean b = repeater.getExecuteOnBootCompleted();
-            if (execute && b) {
+            if (bootCompletedExecute && b) {
                 repeater.AlarmSet(Calendar.getInstance());
-                /*
-                Intent i = new Intent(context, AlarmService.class);
+            } else if (timeChangedExecute) {
+                repeater.AlarmSet(Calendar.getInstance());
+/*
+                Intent i = new Intent(context, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startService(i);
-                */
+                context.startActivity(i);
+*/
             }
         }
     }

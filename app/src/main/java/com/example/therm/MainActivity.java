@@ -1,7 +1,6 @@
 package com.example.therm;
 
 import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import static com.example.therm.R.id.nowTime;
 import static com.example.therm.myApplication.getClassName;
@@ -57,15 +55,15 @@ public class MainActivity extends AppCompatActivity {
             )
     };
     static public String PreferencesName = "minutesRepeater";
-    public final int seekBarMax[] = {60 - intervalMin[0], intervalList.length - 1};
     // 時刻表示のフォーマット
-    final SimpleDateFormat mSimpleDataFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
+    public static SimpleDateFormat sdf_HHmm = new SimpleDateFormat("HH:mm", Locale.US);
+    public static SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss", Locale.US);
+    public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
+    public final int seekBarMax[] = {60 - intervalMin[0], intervalList.length - 1};
     public Timer mTimer;
-    public Handler mHandler;
     // 音関係の変数
     public minutesRepeat repeater;
     public Handler repeaterHandler;
-
     // 時間帯
     public AlarmManager am = null;
     //    public int[][][] zonesArray = new int[timeButtonId.length][2][2];
@@ -74,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
     public int intervalMinutes = 2;
     public boolean BasedOnMinute_00 = false;
     public boolean executeOnBootCompleted;
-    public SimpleDateFormat sd = new SimpleDateFormat("HH:mm", Locale.US);
+    private HandlerThread mHT;
+    private Handler mHandler;
     // 鳴動間隔調整用ボタンのリスナー
     private View.OnClickListener intervalButton = new View.OnClickListener() {
         @Override
@@ -100,18 +99,15 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("main:Receiver", "receive : " + intent.getAction());
+            String action = intent.getAction();
+            Log.d("main:Receiver", String.format("receive : %s", action));
+
             String message = intent.getStringExtra("Message");
-            Log.d("main:Receiver", "Message : " + message);
             ((TextView) findViewById(R.id.nextTime)).setText(message);
             long time = intent.getLongExtra("time", -1);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
-            Log.d("main:Receiver", "time : " + sdf.format(time));
 
-            am = (AlarmManager) getSystemService(ALARM_SERVICE);
-            Intent intent_ring = new Intent(getApplication(), minutesRepeat.class);
-            PendingIntent sender = PendingIntent.getBroadcast(getApplication(), 0, intent_ring, PendingIntent.FLAG_CANCEL_CURRENT);
-
+            Log.d("main:Receiver", "Message : " + message);
+            Log.d("main:Receiver", "time : " + sdf_yyyyMMddHHmmss.format(time));
         }
     };
 
@@ -122,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+        timerStart();
 
         // 自分のreceiverを登録
         HashMap<String, BroadcastReceiver> receivers = new HashMap<>();
@@ -145,8 +142,6 @@ public class MainActivity extends AppCompatActivity {
         executeOnBootCompleted = repeater.getExecuteOnBootCompleted();
         intervalMinutes = repeater.getIntervalValue();
 
-        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
-
         // boolean zoneEnable[]=   repeater.getZonesEnable();
         // int zoneArray[][][] =   repeater.getZonesArray();
         // フィールドの値から変数を初期化
@@ -160,8 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("onCreate", "call AlarmSet()");
 
-        // UIスレッドにpost(Runnable)やsendMessage(message)を送りつけるハンドラーを作成
-        mHandler = new Handler(getMainLooper());
+
         repeater.AlarmSet(Calendar.getInstance());
 
         ((ToggleButton) findViewById(R.id.runOnBootComplete)).setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
@@ -274,24 +268,6 @@ public class MainActivity extends AppCompatActivity {
                 new ringAlarm(getApplicationContext());
             }
         });
-
-        // 現在時刻表示
-        mTimer = new Timer();        // 一秒ごとに定期的に実行します。
-
-        mTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mHandler.post(new Runnable() {
-                    public void run() {
-                        Calendar calendar = Calendar.getInstance();
-                        String nowDate = mSimpleDataFormat.format(calendar.getTime());
-                        // 時刻表示をするTextView
-                        ((TextView) findViewById(nowTime)).setText(nowDate);
-
-                    }
-                });
-            }
-        }, 0, 1000);
     }
 
     @Override
@@ -306,6 +282,29 @@ public class MainActivity extends AppCompatActivity {
         repeater = null;
     }
 
+    public void timerStart() {
+        // 現在時刻表示
+        final Calendar cal = Calendar.getInstance();
+        int millisecond = cal.get(Calendar.MILLISECOND);
+
+        mHandler = new Handler(getMainLooper());
+
+        final Runnable timerRun = new Runnable() {
+            @Override
+            public void run() {
+                String nowDate = sdf_HHmmss.format(Calendar.getInstance().getTime());
+                Log.d("timer", nowDate);
+                // 時刻表示をするTextView
+                ((TextView) findViewById(nowTime)).setText(nowDate);
+                // 1秒毎に自身を起動
+                mHandler.postDelayed(this, 1000);
+            }
+        };
+
+        // 毎秒0ミリ秒のタイミングで起動（初回）
+        mHandler.postDelayed(timerRun, millisecond);
+
+    }
     public void getFieldValues() {
         ((ToggleButton) findViewById(R.id.runOnBootComplete)).setChecked(executeOnBootCompleted);
         ((TextView) findViewById(R.id.intervalNumber)).setText(String.valueOf(intervalMinutes));
@@ -334,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
 
         myTimeZoneArray(final boolean enable[],
                         final int timeZone[][][],
-                        final SimpleImmutableEntry<Integer, SimpleImmutableEntry[]> timeButtonArray[]
+                        final SimpleImmutableEntry<Integer, SimpleImmutableEntry<Integer, Integer>[]> timeButtonSetArray[]
         ) {
             className = myApplication.getClassName();
             timeZoneTable = timeZone;
@@ -345,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
                         this,
                         new SimpleEntry<>(i, enable[i]),
                         new SimpleEntry<>(i, timeZone[i]),
-                        timeButtonArray[i]
+                        timeButtonSetArray[i]
                 );
             }
         }
@@ -429,7 +428,6 @@ public class MainActivity extends AppCompatActivity {
                 TimePickerDialog.OnTimeSetListener timeListener = new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(final TimePicker view, final int hourOfDay, final int minute) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
                         String timeText = String.format(Locale.US, "%02d:%02d", hourOfDay, minute);
 
                         Log.d(className, String.format(Locale.US, "time changed to %s", timeText));
@@ -443,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         try {
-                            Date d = sd.parse((String) text.getText());
+                            Date d = sdf_HHmm.parse((String) text.getText());
                             // 時刻入力ダイアログの処理
                             TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
                             dialog.show();
