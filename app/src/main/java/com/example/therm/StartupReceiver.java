@@ -33,6 +33,7 @@ public class StartupReceiver extends BroadcastReceiver {
                 case Intent.ACTION_TIME_CHANGED:
                 case Intent.ACTION_TIMEZONE_CHANGED:
                     timeChangedExecute = true;
+                    Log.d(className, "onReceive:" + "time changed");
                     break;
             }
             minutesRepeat repeater = new minutesRepeat(context);

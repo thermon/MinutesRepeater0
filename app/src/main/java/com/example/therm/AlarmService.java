@@ -161,8 +161,8 @@ public class AlarmService extends Service {
         Log.d(className, String.format("Broadcast time=%s",(time!=null) ? sdf_HHmmss.format(time.getTime()): "undefined"));
         // Local Broadcast で発信する
         // 次回アラーム時刻をAlarmEventアクションを受け取れるレシーバーに送る
+
         Intent messageIntent = new Intent("AlarmTimeChanged");
-        messageIntent.putExtra("Message", (time!=null) ? sdf_HHmmss.format(time.getTime()): "undefined");
         messageIntent.putExtra("time",(time!=null) ? time.getTimeInMillis(): -1);
         LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
 

@@ -57,8 +57,8 @@ public class MainActivity extends AppCompatActivity {
     static public String PreferencesName = "minutesRepeater";
     // 時刻表示のフォーマット
     public static SimpleDateFormat sdf_HHmm = new SimpleDateFormat("HH:mm", Locale.US);
-    public static SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss", Locale.US);
-    public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
+    public static SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss Z", Locale.US);
+    public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss Z", Locale.US);
     public final int seekBarMax[] = {60 - intervalMin[0], intervalList.length - 1};
     public Timer mTimer;
     // 音関係の変数
@@ -100,16 +100,33 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            Log.d("main:Receiver", String.format("receive : %s", action));
-
-            String message = intent.getStringExtra("Message");
-            ((TextView) findViewById(R.id.nextTime)).setText(message);
+            String nowDate = "undefined";
             long time = intent.getLongExtra("time", -1);
 
-            Log.d("main:Receiver", "Message : " + message);
-            Log.d("main:Receiver", "time : " + sdf_yyyyMMddHHmmss.format(time));
+            if (time >= 0) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(time);
+                //String nowDate = sdf_HHmmss.format(Calendar.getInstance().getTime());
+
+                nowDate = timeFormat(cal);
+            }
+            ((TextView) findViewById(R.id.nextTime)).setText(nowDate);
+
+            Log.d("main:Receiver", "time : " + nowDate);
         }
     };
+
+    private String timeFormat(Calendar cal) {
+        int HH = cal.get(Calendar.HOUR_OF_DAY);
+        int mm = cal.get(Calendar.MINUTE);
+        int ss = cal.get(Calendar.SECOND);
+        int zz = cal.get(Calendar.ZONE_OFFSET);
+        boolean zzf = (zz >= 0);
+        int zzm = (zz / (1000 * 60)) % 60;
+        int zzh = zz / (1000 * 60 * 60);
+
+        return String.format(Locale.US, "%02d:%02d:%02d %c%02d%02d", HH, mm, ss, (zzf ? '+' : '-'), zzh, zzm);
+    }
 
     // 初期化ブロック
     @Override
@@ -292,7 +309,10 @@ public class MainActivity extends AppCompatActivity {
         final Runnable timerRun = new Runnable() {
             @Override
             public void run() {
-                String nowDate = sdf_HHmmss.format(Calendar.getInstance().getTime());
+                Calendar cal = Calendar.getInstance();
+
+                // String nowDate = sdf_HHmmss.format(Calendar.getInstance().getTime());
+                String nowDate = timeFormat(cal);
                 Log.d("timer", nowDate);
                 // 時刻表示をするTextView
                 ((TextView) findViewById(nowTime)).setText(nowDate);
@@ -423,6 +443,19 @@ public class MainActivity extends AppCompatActivity {
                 private String className = "";
                 private Button button = null;
                 private TextView text = null;
+                View.OnClickListener buttonListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        try {
+                            Date d = sdf_HHmm.parse((String) text.getText());
+                            // 時刻入力ダイアログの処理
+                            TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
+                            dialog.show();
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
                 private myTimeZoneUI holder;
                 private SimpleEntry<Integer, int[]> time;
                 TimePickerDialog.OnTimeSetListener timeListener = new TimePickerDialog.OnTimeSetListener() {
@@ -435,19 +468,6 @@ public class MainActivity extends AppCompatActivity {
                         time.setValue(new int[]{hourOfDay, minute});
 
                         holder.pushTime(time);
-                    }
-                };
-                View.OnClickListener buttonListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        try {
-                            Date d = sdf_HHmm.parse((String) text.getText());
-                            // 時刻入力ダイアログの処理
-                            TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
-                            dialog.show();
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
                     }
                 };
 
