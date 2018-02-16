@@ -1,11 +1,13 @@
 package com.example.therm;
 
 import android.app.AlarmManager;
+import android.app.Application;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -22,7 +24,6 @@ import android.widget.TimePicker;
 import android.widget.ToggleButton;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Calendar;
@@ -32,8 +33,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 
-import static com.example.therm.R.id.nowTime;
 import static com.example.therm.myApplication.getClassName;
+import static com.example.therm.myApplication.sdf_HHmm;
 
 public class MainActivity extends AppCompatActivity {
     // 正時のときの鳴動間隔
@@ -55,14 +56,10 @@ public class MainActivity extends AppCompatActivity {
             )
     };
     static public String PreferencesName = "minutesRepeater";
-    // 時刻表示のフォーマット
-    public static SimpleDateFormat sdf_HHmm = new SimpleDateFormat("HH:mm", Locale.US);
-    public static SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss Z", Locale.US);
-    public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss Z", Locale.US);
     public final int seekBarMax[] = {60 - intervalMin[0], intervalList.length - 1};
     public Timer mTimer;
     // 音関係の変数
-    public minutesRepeat repeater;
+    public minutesRepeater repeater;
     public Handler repeaterHandler;
     // 時間帯
     public AlarmManager am = null;
@@ -72,8 +69,11 @@ public class MainActivity extends AppCompatActivity {
     public int intervalMinutes = 2;
     public boolean BasedOnMinute_00 = false;
     public boolean executeOnBootCompleted;
+    Application mApplication;
     private HandlerThread mHT;
     private Handler mHandler;
+    private Runnable timerRun = null;
+
     // 鳴動間隔調整用ボタンのリスナー
     private View.OnClickListener intervalButton = new View.OnClickListener() {
         @Override
@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            String nowDate = "undefined";
+            String nowDate[] = new String[]{"undefined", ""};
             long time = intent.getLongExtra("time", -1);
 
             if (time >= 0) {
@@ -110,22 +110,27 @@ public class MainActivity extends AppCompatActivity {
 
                 nowDate = timeFormat(cal);
             }
-            ((TextView) findViewById(R.id.nextTime)).setText(nowDate);
-
-            Log.d("main:Receiver", "time : " + nowDate);
+            ((TextView) findViewById(R.id.nextTime)).setText(nowDate[0]);
+            ((TextView) findViewById(R.id.nextTimeOffset)).setText(nowDate[2]);
+            Log.d("main:Receiver", String.format(Locale.US, "time : %s.%s %s", nowDate[0], nowDate[1], nowDate[2]));
         }
     };
 
-    private String timeFormat(Calendar cal) {
+    private String[] timeFormat(Calendar cal) {
         int HH = cal.get(Calendar.HOUR_OF_DAY);
         int mm = cal.get(Calendar.MINUTE);
         int ss = cal.get(Calendar.SECOND);
         int zz = cal.get(Calendar.ZONE_OFFSET);
+        int SSS = cal.get(Calendar.MILLISECOND);
+
         boolean zzf = (zz >= 0);
         int zzm = (zz / (1000 * 60)) % 60;
         int zzh = zz / (1000 * 60 * 60);
+        String time = String.format(Locale.US, "%02d:%02d:%02d", HH, mm, ss);
+        String timeSSS = String.format(Locale.US, "%03d", SSS);
+        String offset = String.format(Locale.US, "%c%02d%02d", (zzf ? '+' : '-'), zzh, zzm);
 
-        return String.format(Locale.US, "%02d:%02d:%02d %c%02d%02d", HH, mm, ss, (zzf ? '+' : '-'), zzh, zzm);
+        return new String[]{time, timeSSS, offset};
     }
 
     // 初期化ブロック
@@ -135,6 +140,8 @@ public class MainActivity extends AppCompatActivity {
 
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+
+        mApplication = this.getApplication();
         timerStart();
 
         // 自分のreceiverを登録
@@ -151,8 +158,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // リピーター鳴動用インスタンス初期化
-        repeater = new minutesRepeat(this);
-        repeater.loadData();
+        repeater = myApplication.getRepeater();
 
         seekBarProgress = repeater.getIntervalProgress();
         BasedOnMinute_00 = repeater.getBasedOnHour();
@@ -282,7 +288,25 @@ public class MainActivity extends AppCompatActivity {
         nowTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new ringAlarm(getApplicationContext());
+                Calendar cal = Calendar.getInstance();
+                cal.set(Calendar.HOUR_OF_DAY, 11);
+                cal.set(Calendar.MINUTE, 59);
+                new ringClass(getApplicationContext()).ring(cal);
+
+                // AudioManagerを取得する
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+                if (am != null) {
+                    // 現在の音量を取得する
+                    int ringVolume = am.getStreamVolume(minutesRepeater.myStreamId);
+
+                    // ストリームごとの最大音量を取得する
+                    int ringMaxVolume = am.getStreamMaxVolume(minutesRepeater.myStreamId);
+
+                    // 音量を設定する（UI表示かつサウンドを再生する）
+                    int flags = AudioManager.FLAG_SHOW_UI | AudioManager.FLAG_PLAY_SOUND;
+                    am.setStreamVolume(minutesRepeater.myStreamId, ringVolume, flags);
+                }
             }
         });
     }
@@ -290,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mHandler.removeCallbacks(timerRun);
         // 定期実行をcancelする
         if (mTimer != null) {
             mTimer.cancel();
@@ -302,29 +327,28 @@ public class MainActivity extends AppCompatActivity {
     public void timerStart() {
         // 現在時刻表示
         final Calendar cal = Calendar.getInstance();
-        int millisecond = cal.get(Calendar.MILLISECOND);
+        mHandler = new Handler(getMainLooper());    // UIスレッドにRunnableを放り込むためのハンドラを取得
 
-        mHandler = new Handler(getMainLooper());
-
-        final Runnable timerRun = new Runnable() {
+        timerRun = new Runnable() {
             @Override
             public void run() {
                 Calendar cal = Calendar.getInstance();
 
                 // String nowDate = sdf_HHmmss.format(Calendar.getInstance().getTime());
-                String nowDate = timeFormat(cal);
-                Log.d("timer", nowDate);
+                String nowDate[] = timeFormat(cal);
+                Log.d("timer", String.format(Locale.US, "%s.%s %s", nowDate[0], nowDate[1], nowDate[2]));
                 // 時刻表示をするTextView
-                ((TextView) findViewById(nowTime)).setText(nowDate);
-                // 1秒毎に自身を起動
-                mHandler.postDelayed(this, 1000);
+                ((TextView) findViewById(R.id.nowTime)).setText(nowDate[0]);
+                ((TextView) findViewById(R.id.nowTimeOffset)).setText(nowDate[2]);
+                // 秒が変わる瞬間に自身を起動
+                mHandler.postDelayed(this, 1000 - cal.get(Calendar.MILLISECOND));
             }
         };
 
         // 毎秒0ミリ秒のタイミングで起動（初回）
-        mHandler.postDelayed(timerRun, millisecond);
-
+        mHandler.postDelayed(timerRun, 1000 - cal.get(Calendar.MILLISECOND));
     }
+
     public void getFieldValues() {
         ((ToggleButton) findViewById(R.id.runOnBootComplete)).setChecked(executeOnBootCompleted);
         ((TextView) findViewById(R.id.intervalNumber)).setText(String.valueOf(intervalMinutes));

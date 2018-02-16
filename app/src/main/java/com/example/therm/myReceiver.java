@@ -7,7 +7,7 @@ import android.util.Log;
 
 import java.util.Calendar;
 
-public class StartupReceiver extends BroadcastReceiver {
+public class myReceiver extends BroadcastReceiver {
     private String className = "StartupReceiver";
 
     @Override
@@ -35,9 +35,12 @@ public class StartupReceiver extends BroadcastReceiver {
                     timeChangedExecute = true;
                     Log.d(className, "onReceive:" + "time changed");
                     break;
+                case "ring":
+                    new ringClass(context).ring();
+                    break;
             }
-            minutesRepeat repeater = new minutesRepeat(context);
-            repeater.loadData();
+            minutesRepeater repeater = myApplication.getRepeater();
+            // repeater.loadData();
 
             boolean b = repeater.getExecuteOnBootCompleted();
             if (bootCompletedExecute && b) {

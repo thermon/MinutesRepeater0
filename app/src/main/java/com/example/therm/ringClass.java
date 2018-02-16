@@ -12,7 +12,7 @@ import android.util.Log;
 
 import java.util.Calendar;
 
-class ringAlarm {
+class ringClass {
     private static int myStreamId = AudioManager.STREAM_ALARM;
     private final int resId[] = {
             R.raw.hour,
@@ -28,13 +28,22 @@ class ringAlarm {
     private HandlerThread mHT;
     private Handler mHandler;
     private String className;
+    private Context myContext;
+    private int counts[] = new int[resId.length];
 
+    ringClass(Context context) {
+        myContext = context;
+    }
 
     // リピーター音を鳴らす処理
-    ringAlarm(Context context) {
+    void ring() {
+        ring(Calendar.getInstance());
+    }
+
+    void ring(Calendar cal) {
         className = myApplication.getClassName();
         // AudioManagerを取得する
-        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        AudioManager am = (AudioManager) myContext.getSystemService(Context.AUDIO_SERVICE);
 
         if (am != null) {
             // 現在の音量を取得する
@@ -47,8 +56,6 @@ class ringAlarm {
             am.setStreamVolume(myStreamId, ringVolume, 0);
         }
 
-
-        Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
         int[] minArray = myApplication.div_qr(minute, 15);
@@ -57,8 +64,8 @@ class ringAlarm {
         if (hour == 0) hour = 12;
 
 //        int count[] = {hour, min_15, min_1}; // 鳴動回数
-        final int count[] = {hour, minArray[0], minArray[1]}; // 鳴動回数
-        soundLoad(context, count);
+        counts = new int[]{hour, minArray[0], minArray[1]}; // 鳴動回数
+        soundLoad();
 
         mHT = new HandlerThread("repeater");
         mHT.start();
@@ -70,11 +77,11 @@ class ringAlarm {
         int wait = wait0;
         for (int k = 0; k < resId.length; k++) {  // チャイム、時間、15分、5分、1分の順で鳴らす
 //            Log.d("debug", "k=" + k);
-            if (count[k] <= 0) continue;
+            if (counts[k] <= 0) continue;
             // カウントする場合
             final int[] mStreamId = new int[1];
             final int sid = soundId[k];
-            final int mCount = count[k];
+            final int mCount = counts[k];
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -82,7 +89,7 @@ class ringAlarm {
                 }
             }, wait);
 
-            wait += waitArray[k] * count[k] + wait1;
+            wait += waitArray[k] * counts[k] + wait1;
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -109,7 +116,7 @@ class ringAlarm {
         Log.d(className, "ring.");
     }
 
-    private void soundLoad(Context context, int counts[]) {
+    private void soundLoad() {
         // 音読み込み
         //ロリポップより前のバージョンに対応するコード
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -137,9 +144,9 @@ class ringAlarm {
         for (int i = 0; i < resId.length; i++) {
             if (counts[i] <= 0) continue;
             int id = SoundsPool.load(
-                    context, resId[i], 1);
+                    myContext, resId[i], 1);
             soundId[i] = id;
-            MediaPlayer mp = MediaPlayer.create(context, resId[i]);
+            MediaPlayer mp = MediaPlayer.create(myContext, resId[i]);
             waitArray[i] = mp.getDuration();
             mp.release();
         }

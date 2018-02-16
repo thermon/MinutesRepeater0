@@ -14,15 +14,15 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class AlarmService extends Service {
-    private static SimpleDateFormat sdf_HHmm = MainActivity.sdf_HHmm;
-    private static SimpleDateFormat sdf_HHmmss = MainActivity.sdf_HHmmss;
-    private static SimpleDateFormat sdf_yyyyMMddHHmmss = MainActivity.sdf_yyyyMMddHHmmss;
+import static com.example.therm.myApplication.sdf_HHmm;
+import static com.example.therm.myApplication.sdf_HHmmss;
+import static com.example.therm.myApplication.sdf_yyyyMMddHHmmss;
+
+public class myService extends Service {
     // private Notification notification;
-    minutesRepeat repeater = null;
+    minutesRepeater repeater = null;
     private String className = "AlarmService";
     // 繰り返し間隔、1分
     private long repeatPeriod = 1000*60;
@@ -51,7 +51,7 @@ public class AlarmService extends Service {
         Log.d(className, "created");
         context = getApplicationContext();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // if (repeater==null) repeater = new minutesRepeat(context);
+        // if (repeater==null) repeater = new minutesRepeater(context);
     }
 
 
@@ -64,7 +64,9 @@ public class AlarmService extends Service {
     // Alarm によって呼び出される
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        repeater = new minutesRepeat(context);
+        repeater = myApplication.getRepeater();
+//        repeater =new minutesRepeater(getApplicationContext());
+//        repeater.loadData();
             /*
         Log.d(className, "start");
         Bundle bundle = intent.getExtras();
@@ -173,7 +175,7 @@ public class AlarmService extends Service {
     // 次のアラームの設定
     private void setNextAlarmService(boolean b,Calendar cal){
         // intentはAlarmServiceクラス（つまり自分自身）に動作を遷移するよう設定する
-        Intent intent = new Intent(context, AlarmService.class);
+        Intent intent = new Intent(context, myService.class);
         time = cal;
 
         Gson gson = new Gson();
@@ -212,12 +214,13 @@ public class AlarmService extends Service {
             if (b) {
                 // timeが指す時刻にAlarmReceiverを起動する
                 // intent_ringはAlarmReceiverクラスに動作を遷移するよう設定する
-                Intent intent_ring = new Intent(context, ringReceiver.class);
+                Intent intent_ring = new Intent(context, myReceiver.class);
+                intent_ring.setAction("ring");
 
                 PendingIntent pendingIntent_ring
                         = PendingIntent.getBroadcast(context, 1, intent_ring,PendingIntent.FLAG_CANCEL_CURRENT);
 
-                Log.d(className, "next ringReceiver trigger time=" + sdf_yyyyMMddHHmmss.format(cal.getTimeInMillis()));
+                Log.d(className, "next ring trigger time=" + sdf_yyyyMMddHHmmss.format(cal.getTimeInMillis()));
                 // SDK 19 以下ではsetを使う
                 if (android.os.Build.VERSION.SDK_INT < 19) {
                     alarmManager.set(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),pendingIntent_ring);
@@ -257,7 +260,7 @@ public class AlarmService extends Service {
     }
 
     private void stopAlarmService(){
-        Intent indent = new Intent(context, AlarmService.class);
+        Intent indent = new Intent(context, myService.class);
         time = null;
 
         PendingIntent pendingIntent = PendingIntent.getService(context, 0, indent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -270,7 +273,8 @@ public class AlarmService extends Service {
 
             // timeが指す時刻にAlarmReceiverを起動する
             // intent_ringはAlarmReceiverクラスに動作を遷移するよう設定する
-            Intent intent_ring = new Intent(context, ringReceiver.class);
+            Intent intent_ring = new Intent(context, myReceiver.class);
+            intent_ring.setAction("ring");
 
             PendingIntent pendingIntent_ring
                     = PendingIntent.getBroadcast(context, 1, intent_ring, PendingIntent.FLAG_CANCEL_CURRENT);
