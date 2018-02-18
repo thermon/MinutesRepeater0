@@ -25,7 +25,6 @@ import android.widget.ToggleButton;
 
 import java.text.ParseException;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,21 +40,20 @@ public class MainActivity extends AppCompatActivity {
     public static final int[] intervalList = {2, 3, 4, 5, 6, 10, 12, 15, 20, 30};
     // 最長鳴動間隔
     public static final int[] intervalMin = {1, intervalList[0]};
-    public static final SimpleImmutableEntry[] timeButtonId = new SimpleImmutableEntry[]{
-            new SimpleImmutableEntry<>(R.id.TimeZone1_Enable,
-                    new SimpleImmutableEntry[]{
-                            new SimpleImmutableEntry<>(R.id.TimeZone1_Start, R.id.TimeZone1_Start_Text),
-                            new SimpleImmutableEntry<>(R.id.TImeZone1_End, R.id.TimeZone1_End_Text)
-                    }
-            ),
-            new SimpleImmutableEntry<>(R.id.TimeZone2_Enable,
-                    new SimpleImmutableEntry[]{
-                            new SimpleImmutableEntry<>(R.id.TimeZone2_Start, R.id.TimeZone2_Start_Text),
-                            new SimpleImmutableEntry<>(R.id.TImeZone2_End, R.id.TImeZone2_End_Text)
-                    }
-            )
-    };
     static public String PreferencesName = "minutesRepeater";
+    static int[][][] buttonsIdArray = new int[][][]
+            {
+                    new int[][]{
+                            new int[]{R.id.TimeZone1Enable},
+                            new int[]{R.id.TimeZone1StartTimeButton, R.id.TImeZone1EndTimeButton},
+                            new int[]{R.id.TimeZone1StartTimeValue, R.id.TimeZone1EndTimeValue}
+                    },
+                    new int[][]{
+                            new int[]{R.id.TimeZone2Enable},
+                            new int[]{R.id.TimeZone2StartTimeButton, R.id.TImeZone2EndTimeButton},
+                            new int[]{R.id.TimeZone2StartTimeValue, R.id.TImeZone2EndTimeValue}
+                    }
+            };
     public final int seekBarMax[] = {60 - intervalMin[0], intervalList.length - 1};
     public Timer mTimer;
     // 音関係の変数
@@ -73,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
     private HandlerThread mHT;
     private Handler mHandler;
     private Runnable timerRun = null;
-
     // 鳴動間隔調整用ボタンのリスナー
     private View.OnClickListener intervalButton = new View.OnClickListener() {
         @Override
@@ -100,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            String nowDate[] = new String[]{"undefined", ""};
+            String nowDate[] = new String[]{"undefined", "", ""};
             long time = intent.getLongExtra("time", -1);
 
             if (time >= 0) {
@@ -171,9 +168,9 @@ public class MainActivity extends AppCompatActivity {
         getFieldValues();
 
         myTimeZoneArray timeZoneArray = new myTimeZoneArray(
+                buttonsIdArray,
                 repeater.getZonesEnable(),
-                repeater.getZonesArray(),
-                timeButtonId
+                repeater.getZonesArray()
         );
 
         Log.d("onCreate", "call AlarmSet()");
@@ -369,150 +366,224 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /*
+    public static final SimpleImmutableEntry[] timeButtonId = new SimpleImmutableEntry[]{
+            new SimpleImmutableEntry<>(R.id.TimeZone1_Enable,
+                    new SimpleImmutableEntry[]{
+                            new SimpleImmutableEntry<>(R.id.TimeZone1_Start, R.id.TimeZone1_Start_Text),
+                            new SimpleImmutableEntry<>(R.id.TImeZone1_End, R.id.TimeZone1_End_Text)
+                    }
+            ),
+            new SimpleImmutableEntry<>(R.id.TimeZone2_Enable,
+                    new SimpleImmutableEntry[]{
+                            new SimpleImmutableEntry<>(R.id.TimeZone2_Start, R.id.TimeZone2_Start_Text),
+                            new SimpleImmutableEntry<>(R.id.TImeZone2_End, R.id.TImeZone2_End_Text)
+                    }
+            )
+    };
+*/
+    enum buttonsArrayInnerKey {
+        CheckBox,
+        Buttons,
+        Fields
+    }
+
+    enum timeFieldEnum {
+        Hour,
+        Minute
+    }
+
+    enum timeIndexEnum {
+        Start,
+        End
+    }
+
+    // 時刻データを、ボタンやテキストビューの情報と一緒に保持するクラス
+    class myTimeUI {
+
+        private String className = "";
+        private myTimeZoneUI caller = null;
+        private Button button = null;
+        private TextView textView = null;
+        private int timeIndex = 0;
+        private int hour = 0;
+        private int minute = 0;
+
+        private SimpleEntry<Integer, int[]> time;
+
+        myTimeUI(
+                final myTimeZoneUI caller,
+                final int timeIndex,
+                final int buttonId,
+                final int textViewId,
+                final int[] time) {
+            className = getClassName();
+            this.caller = caller;
+            this.timeIndex = timeIndex;
+
+            button = findViewById(buttonId);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    try {
+                        Date d = sdf_HHmm.parse((String) textView.getText());
+                        // 時刻入力ダイアログの処理
+                        TimePickerDialog dialog = new TimePickerDialog(MainActivity.this,
+                                new TimePickerDialog.OnTimeSetListener() {
+                                    @Override
+                                    public void onTimeSet(final TimePicker view, final int hourOfDay, final int minute) {
+                                        setTime(hourOfDay, minute);
+                                        caller.setTime(timeIndex, hourOfDay, minute);
+                                    }
+                                }, d.getHours(), d.getMinutes(), true);
+                        dialog.show();
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            textView = findViewById(textViewId);
+            setTime(
+                    time[timeFieldEnum.Hour.ordinal()],
+                    time[timeFieldEnum.Minute.ordinal()]
+            );
+        }
+
+        myTimeUI setTime(int hour, int minute) {
+            this.hour = hour;
+            this.minute = minute;
+
+            String timeText = String.format(Locale.US, "%02d:%02d", this.hour, this.minute);
+            textView.setText(timeText);
+            Log.d(className, String.format(Locale.US, "time changed to %s", timeText));
+            return this;
+        }
+
+        int getHour() {
+            return hour;
+        }
+
+        int getMinute() {
+            return minute;
+        }
+
+    }
+
+    // 一つの時間帯を、チェックボックスや配下の時刻データとともに保持するクラス
+    class myTimeZoneUI {
+        private String className;
+        private CheckBox checkBox;
+        private SimpleEntry<Integer, int[][]> timeZone;
+        private myTimeZoneArray caller;
+        private int periodNumber;
+        private SimpleEntry<Integer, Boolean> enable;
+
+        myTimeZoneUI(
+                final myTimeZoneArray caller,
+                final int periodNumber,
+                final boolean enableData,
+                final int buttonsIdArray[][],
+                final int timeArray[][]
+        ) {
+            className = myApplication.getClassName();
+
+            this.caller = caller;
+            this.periodNumber = periodNumber;
+
+            checkBox = findViewById(buttonsIdArray[buttonsArrayInnerKey.CheckBox.ordinal()][0]);
+            checkBox.setChecked(enableData);
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    Log.d("TimeZone", String.format("%s:%b", compoundButton.getText(), b));
+                    setEnable(b);
+                    caller.setEnable(periodNumber, b);
+                }
+            });
+
+            for (Enum<timeIndexEnum> _timeIndex : timeIndexEnum.values()) {
+                int i = _timeIndex.ordinal();
+                new myTimeUI(
+                        this,
+                        i,
+                        buttonsIdArray[buttonsArrayInnerKey.Buttons.ordinal()][i],
+                        buttonsIdArray[buttonsArrayInnerKey.Fields.ordinal()][i],
+                        timeArray[i]
+                );
+            }
+        }
+
+        myTimeZoneUI setEnable(boolean b) {
+            checkBox.setChecked(b);
+            return this;
+        }
+
+        myTimeZoneUI setTime(int timeIndex, int hour, int minute) {
+            caller.setTime(periodNumber, timeIndex, hour, minute);
+            return this;
+        }
+    }
+
     // 複数の時間帯データを保持するクラス
     class myTimeZoneArray {
         private int timeZoneTable[][][];
         private boolean enableArray[];
         private String className;
 
-        myTimeZoneArray(final boolean enable[],
-                        final int timeZone[][][],
-                        final SimpleImmutableEntry<Integer, SimpleImmutableEntry<Integer, Integer>[]> timeButtonSetArray[]
+        myTimeZoneArray(
+                final int[][][] buttonsIdArray,
+                final boolean[] enableDatas,
+                final int[][][] timeZoneDatas
         ) {
             className = myApplication.getClassName();
-            timeZoneTable = timeZone;
-            enableArray = enable;
 
-            for (int i = 0; i < timeButtonId.length; i++) {
+            // データ構造
+            timeZoneTable = timeZoneDatas;
+            enableArray = enableDatas;
+
+            for (int periodNumber = 0; periodNumber < buttonsIdArray.length; periodNumber++) {
                 new myTimeZoneUI(
                         this,
-                        new SimpleEntry<>(i, enable[i]),
-                        new SimpleEntry<>(i, timeZone[i]),
-                        timeButtonSetArray[i]
+                        periodNumber,
+                        enableDatas[periodNumber],
+                        buttonsIdArray[periodNumber],
+                        timeZoneDatas[periodNumber]
                 );
             }
         }
 
-        void pushTimeZone(final SimpleEntry<Integer, int[][]> timeZoneUI) {
-            timeZoneTable[timeZoneUI.getKey()] = timeZoneUI.getValue();
-
-            for (int i = 0; i < timeZoneTable.length; i++) {
-                for (int j = 0; j < timeZoneTable[i].length; j++) {
-                    for (int k = 0; k < timeZoneTable[i][j].length; k++) {
-                        Log.d(className, String.format("timeZoneTable[%d][%d][%d]=%d", i, j, k, timeZoneTable[i][j][k]));
-                    }
-                }
-            }
-            repeater.setZonesArray(timeZoneTable);
-            repeater.AlarmSet(Calendar.getInstance());
-        }
-
-        void pushEnable(final SimpleEntry<Integer, Boolean> timeZoneUI) {
-            enableArray[timeZoneUI.getKey()] = timeZoneUI.getValue();
+        myTimeZoneArray setEnable(
+                final int periodNumber,
+                final boolean periodEnable
+        ) {
+            enableArray[periodNumber] = periodEnable;
 
             for (int i = 0; i < enableArray.length; i++) {
                 Log.d(className, String.format("enableArray[%d]=%b", i, enableArray[i]));
             }
             repeater.setZonesEnable(enableArray);
             repeater.AlarmSet(Calendar.getInstance());
+            return this;
         }
 
-        // 一つの時間帯を、チェックボックスや配下の時刻データとともに保持するクラス
-        class myTimeZoneUI {
-            private String className;
-            private CheckBox checkBox;
-            private SimpleEntry<Integer, int[][]> timeZone;
-            private myTimeZoneArray holder;
-            private SimpleEntry<Integer, Boolean> enable;
+        myTimeZoneArray setTime(int periodNumber, int timeIndex, int hour, int minute) {
+            timeZoneTable[periodNumber][timeIndex] = new int[]{hour, minute};
 
-            myTimeZoneUI(
-                    final myTimeZoneArray parent,
-                    final SimpleEntry<Integer, Boolean> enableData,
-                    final SimpleEntry<Integer, int[][]> timeZoneData,
-                    final SimpleImmutableEntry<Integer, SimpleImmutableEntry<Integer, Integer>[]> timeButtonArray
-            ) {
-                holder = parent;
-                className = myApplication.getClassName();
-
-                enable = enableData;
-                timeZone = timeZoneData;
-
-                for (int i = 0; i < timeZone.getValue().length; i++) {
-                    new myTimeUI(
-                            this,
-                            new SimpleEntry<>(i, timeZone.getValue()[i]),
-                            timeButtonArray.getValue()[i]
-                    );
+            for (int i = 0; i < timeZoneTable.length; i++) {
+                for (Enum<timeIndexEnum> _timeIndex : timeIndexEnum.values()) {
+                    for (Enum<timeFieldEnum> _timeField : timeFieldEnum.values()) {
+                        Log.d(className, String.format("timeZoneTable[%d][%d][%d]=%d", i, _timeIndex.ordinal(), _timeField.ordinal(),
+                                timeZoneTable[i][_timeIndex.ordinal()][_timeField.ordinal()]));
+                    }
                 }
-
-                checkBox = findViewById(timeButtonArray.getKey());
-                checkBox.setChecked(enableData.getValue());
-                checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                        Log.d("TimeZone", String.format("%s:%b", compoundButton.getText(), b));
-                        enable.setValue(b);
-                        holder.pushEnable(enable);
-                    }
-                });
             }
+            repeater.setZonesArray(timeZoneTable);
+            repeater.AlarmSet(Calendar.getInstance());
 
-            private void pushTime(final SimpleEntry<Integer, int[]> timeUI) {
-                timeZone.getValue()[timeUI.getKey()] = timeUI.getValue();
-                holder.pushTimeZone(timeZone);
-            }
-
-            // 時刻データを、ボタンやテキストビューの情報と一緒に保持するクラス
-            class myTimeUI {
-                private String className = "";
-                private Button button = null;
-                private TextView text = null;
-                View.OnClickListener buttonListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        try {
-                            Date d = sdf_HHmm.parse((String) text.getText());
-                            // 時刻入力ダイアログの処理
-                            TimePickerDialog dialog = new TimePickerDialog(MainActivity.this, timeListener, d.getHours(), d.getMinutes(), true);
-                            dialog.show();
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
-                private myTimeZoneUI holder;
-                private SimpleEntry<Integer, int[]> time;
-                TimePickerDialog.OnTimeSetListener timeListener = new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(final TimePicker view, final int hourOfDay, final int minute) {
-                        String timeText = String.format(Locale.US, "%02d:%02d", hourOfDay, minute);
-
-                        Log.d(className, String.format(Locale.US, "time changed to %s", timeText));
-                        text.setText(timeText);
-                        time.setValue(new int[]{hourOfDay, minute});
-
-                        holder.pushTime(time);
-                    }
-                };
-
-                myTimeUI(
-                        final myTimeZoneUI parent,
-                        final SimpleEntry<Integer, int[]> timeData,
-                        final SimpleImmutableEntry<Integer, Integer> ids
-                ) {
-                    holder = parent;
-                    className = getClassName();
-
-                    time = timeData;
-
-                    button = findViewById(ids.getKey());
-                    button.setOnClickListener(buttonListener);
-
-                    text = findViewById(ids.getValue());
-                    text.setText(String.format(Locale.US, "%02d:%02d", timeData.getValue()[0], timeData.getValue()[1]));
-                }
-
-            }
+            return this;
         }
+
+
     }
 }

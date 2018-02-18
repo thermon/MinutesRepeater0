@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.util.Log;
 
+import com.example.therm.myApplication.Hour_Minute;
+import com.example.therm.myApplication.Start_End;
 import com.google.gson.Gson;
 
 import org.jetbrains.annotations.Contract;
@@ -17,13 +19,13 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import static com.example.therm.MainActivity.PreferencesName;
-import static com.example.therm.MainActivity.timeButtonId;
+import static com.example.therm.MainActivity.buttonsIdArray;
 
 public class myApplication extends Application {
     // 時刻表示のフォーマット
     public static SimpleDateFormat sdf_HHmm = new SimpleDateFormat("HH:mm", Locale.US);
     public static SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss Z", Locale.US);
-    public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss Z", Locale.US);
+    public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd(E) HH:mm:ss Z", Locale.JAPANESE);
     private static minutesRepeater repeater;
     Application instance = null;
 
@@ -50,6 +52,26 @@ public class myApplication extends Application {
 
         // setupLeakCanary();
     }
+
+    public enum Hour_Minute {
+        hour,
+        minute
+    }
+
+    public enum Start_End {
+        start,
+        end
+    }
+
+    public enum Button_TextView {
+        button,
+        textView
+    }
+
+    public enum Checkbox_Times {
+        checkbox,
+        times
+    }
 }
 
 // ミニッツリピーター鳴動クラス
@@ -64,8 +86,8 @@ class minutesRepeater {
     private String className;
     private Context MainContext;
     private SharedPreferences sharedPreferences;
-    private int[][][] zonesArray = new int[timeButtonId.length][][];
-    private boolean[] zonesEnable = new boolean[timeButtonId.length];
+    private int[][][] zonesArray = new int[buttonsIdArray.length][][];
+    private boolean[] zonesEnable = new boolean[buttonsIdArray.length];
     private int intervalProgress = 0;
     private int intervalMinutes = 2;
     private boolean basedOnHour = false;
@@ -160,12 +182,12 @@ class minutesRepeater {
         Log.d("Preferences", "load intervalSeekBar:" + intervalProgress);
 
         if (zonesArray == null) {
-            zonesArray = new int[MainActivity.timeButtonId.length][][];
+            zonesArray = new int[buttonsIdArray.length][][];
             for (int i = 0; i < zonesArray.length; i++) {
                 zonesArray[i] = new int[][]{{0, 0}, {0, 0}};
             }
         }
-        if (zonesEnable == null) zonesEnable = new boolean[MainActivity.timeButtonId.length];
+        if (zonesEnable == null) zonesEnable = new boolean[buttonsIdArray.length];
     }
 
     // シークバーの値から鳴動間隔に変換
@@ -195,137 +217,108 @@ class minutesRepeater {
                     ", line " + ste[i].getLineNumber() + " of " + ste[i].getFileName());
         }
 */
-        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.US);
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
-        Log.d("getNextAlarmTime", "now=" + sdf2.format(time.getTime()));
 
+        Log.d("getNextAlarmTime", "now=" + myApplication.sdf_yyyyMMddHHmmss.format(time.getTimeInMillis()));
         Log.d("getNextAlarmTime", "interval=" + String.valueOf(interval));
 
         time.set(Calendar.SECOND, 0);
         time.set(Calendar.MILLISECOND, 0);
 
-        int hour = time.get(Calendar.HOUR_OF_DAY);
-        int minute = time.get(Calendar.MINUTE);
-
-        int nextTime = hour * minutesOfHour + minute;
+        Calendar nextTime = time;
         // basedOnHourがtrueなら、毎時00分を基準にする
-        // nextTime += interval - (basedOnHour ? (minute % interval) :0);
-
-//        if (basedOnHour) nextTime-= minute % interval;
         if (basedOnHour) {
-            int modulo = ((nextTime % minutesOfHour) % interval);
+            int minute = nextTime.get(Calendar.MINUTE);
+            int modulo = minute % interval;
             if (modulo > 0) {
-                nextTime -= ((nextTime % minutesOfHour) % interval);
+                nextTime.add(Calendar.MINUTE, -modulo);
             }
         }
-        nextTime += interval;
+        nextTime.add(Calendar.MINUTE, interval);
+        // nextTime += interval;
 
-        Log.d("getNextAlarmTime", "next=" + timeFormat(nextTime));
+        Log.d("getNextAlarmTime", "next=" + myApplication.sdf_yyyyMMddHHmmss.format(nextTime.getTimeInMillis()));
         // アラーム時刻変更
         // 現在時刻と時間帯をもとにアラーム時刻を設定
-        ArrayList<Integer> alarmTime = new ArrayList<>();
+        ArrayList<Calendar> alarmTime = new ArrayList<>();
 
         for (int i = 0; i < zonesArray.length; i++) {
             if (!zonesEnable[i]) continue;
 
             int zone[][] = zonesArray[i];
-            int StartTime = makeTime(zone[0]);
-            int EndTime = makeTime(zone[1]);
 
-            if (EndTime > StartTime) { // 時間帯が日を跨がない場合
-                if (nextTime >= EndTime) {  // 時間帯終了後のとき
+            Calendar times[] = new Calendar[2];
+            for (int j = 0; j < times.length; j++) {
+                times[j] = Calendar.getInstance();
+                times[j].set(Calendar.HOUR_OF_DAY, zone[j][Hour_Minute.hour.ordinal()]);
+                times[j].set(Calendar.MINUTE, zone[j][Hour_Minute.minute.ordinal()]);
+                times[j].set(Calendar.SECOND, 0);
+                times[j].set(Calendar.MILLISECOND, 0);
+            }
+            Calendar StartTime = times[Start_End.start.ordinal()];
+            Calendar EndTime = times[Start_End.end.ordinal()];
+
+            if (EndTime.compareTo(StartTime) > 0) { // 時間帯が日を跨がない場合
+                if (nextTime.compareTo(EndTime) >= 0) {  // 時間帯終了後のとき
                     // 開始時刻及び終了時刻は翌日になる
-                    StartTime += minutesOfDay;
-                    EndTime += minutesOfDay;
+                    StartTime.add(Calendar.DATE, 1);
+                    EndTime.add(Calendar.DATE, 1);
                 }
             } else {    // 時間帯が日を跨ぐ場合
-                if (nextTime < EndTime) {   // 予定時刻が終了時刻より前　＝　時間帯を過ぎていない
+                if (nextTime.compareTo(EndTime) < 0) {   // 予定時刻が終了時刻より前　＝　時間帯を過ぎていない
                     // 開始時刻は前日になる
-                    StartTime -= minutesOfDay;
+                    StartTime.add(Calendar.DATE, -1);
                 } else {
                     // 終了時刻は翌日
-                    EndTime += minutesOfDay;
+                    EndTime.add(Calendar.DATE, 1);
                 }
             }
 
-            Log.d("getNextAlarmTime", String.format("start[%d]=%s", i, timeFormat(StartTime)));
-            Log.d("getNextAlarmTime", String.format("  end[%d]=%s", i, timeFormat(EndTime)));
-            if (EndTime > nextTime && nextTime >= StartTime) {
+            Log.d("getNextAlarmTime", String.format("start[%d]=%s", i, myApplication.sdf_yyyyMMddHHmmss.format(StartTime.getTimeInMillis())));
+            Log.d("getNextAlarmTime", String.format("  end[%d]=%s", i, myApplication.sdf_yyyyMMddHHmmss.format(EndTime.getTimeInMillis())));
+            if (EndTime.compareTo(nextTime) > 0 && nextTime.compareTo(StartTime) >= 0) {
                 // 次回予定時刻がタイムゾーン内にある場合
                 alarmTime.add(nextTime);
-                Log.d("getNextAlarmTime", String.format(" next[%d]:in =%s", i, timeFormat(nextTime)));
+                Log.d("getNextAlarmTime", String.format(" next[%d]:in =%s", i, myApplication.sdf_yyyyMMddHHmmss.format(nextTime.getTimeInMillis())));
             } else {
                 // 現在時刻がタイムゾーン外の場合、次回予定時刻より遅い直近の開始時刻を探す。
                 if (basedOnHour) {
-                    int remain = ((StartTime % minutesOfHour) % interval);
-                    if (remain > 0) StartTime += interval - remain;
+                    int remain = StartTime.get(Calendar.MINUTE) % interval;
+                    if (remain > 0) StartTime.add(Calendar.MINUTE, interval - remain);
                 }
                 alarmTime.add(StartTime);
-                Log.d("getNextAlarmTime", String.format(" next[%d]:out=%s", i, timeFormat(StartTime)));
+                Log.d("getNextAlarmTime", String.format(" next[%d]:out=%s", i, myApplication.sdf_yyyyMMddHHmmss.format(StartTime.getTimeInMillis())));
 
             }
         }
         if (alarmTime.size() == 0) return null;
 
-        for (int t : alarmTime) {
-            Log.d("getNextAlarmTime", String.format("StartTimes=%s", timeFormat(t)));
+        for (Calendar t : alarmTime) {
+            Log.d("getNextAlarmTime", String.format("StartTimes=%s", myApplication.sdf_yyyyMMddHHmmss.format(t.getTimeInMillis())));
         }
 
-        int Start1 = -1;
-        int Start2 = 2 * minutesOfDay;
+        Calendar Start1 = Calendar.getInstance();
+        Start1.setTimeInMillis(0);
+
+        Calendar Start2 = Calendar.getInstance();
+        Start2.add(Calendar.DATE, 2);
         // 開始時刻リストでループ
-        for (int t : alarmTime) {
+        for (Calendar t : alarmTime) {
             // 開始時刻が予定時刻よりも早い && Start1が開始時刻よりも早いなら、Start1に開始時刻を入れる
-            if (t < nextTime) {
-                if (Start1 < t) Start1 = t;
+            if (t.compareTo(nextTime) < 0) {
+                if (Start1.compareTo(t) < 0) Start1 = t;
             }
             // 開始時刻が予定時刻よりも遅い && Start2が開始時刻よりも遅いなら、Start2に開始時刻を入れる
             else {
-                if (Start2 > t) Start2 = t;
+                if (Start2.compareTo(t) > 0) Start2 = t;
             }
         }
         // 全ての開始時刻が予定時刻よりも遅いなら、開始時刻の中で一番早い時刻を予定時刻にする
         // 予定時刻よりも早い開始時刻があれば、そのなかで一番遅い開始時刻を予定時刻にする
 
-        final int Start = (Start1 == -1) ? Start2 : Start1;
-
-        minute = Start % minutesOfHour;
-        hour = (Start - minute) / minutesOfHour;
-        int day = (hour >= hoursOfDay) ? 1 : 0;
-        hour -= day * hoursOfDay;
-
-        Log.d("getNextAlarmTime", String.format("next=%1$02d:%2$02d", hour, minute));
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, hour);
-        cal.set(Calendar.MINUTE, minute);
-        cal.add(Calendar.DATE, day);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-/*
-        int offsetMilli=0;
-        int count[]=div_qr(minute,15);
-        offsetMilli+=hour*waitArray[0];
-        for (int i=0;i<2;i++) {
-            if (count[i] > 0) offsetMilli += count[i] * waitArray[i + 1] + wait1;
-        }
-        // cal.add(Calendar.MILLISECOND,-offsetMilli);
-*/
-        return cal;
-    }
-
-    private String timeFormat(int time) {
-        int day = 0;
-        while (time < 0) {
-            time += minutesOfDay;
-            day--;
-        }
-        while (time >= minutesOfDay) {
-            time -= minutesOfDay;
-            day++;
-        }
-        int minute = time % minutesOfHour;
-        int hour = (time - minute) / minutesOfHour;
-        return String.format(Locale.US, "%+d %02d:%02d", day, hour, minute);
+        final Calendar Start = (Start1.getTimeInMillis() == 0) ? Start2 : Start1;
+        // Start.set(Calendar.SECOND, 0);
+        // Start.set(Calendar.MILLISECOND, 0);
+        return Start;
     }
 
     void AlarmSet(Calendar time) {

@@ -200,14 +200,15 @@ public class myService extends Service {
             startMillis = System.currentTimeMillis();
             startMillis+=repeatPeriod - startMillis % repeatPeriod;
             // SDK 19 以下ではsetを使う
+            // 次回鳴動時刻の更新時刻を一瞬遅らせる（負荷低減のため？）
             if(android.os.Build.VERSION.SDK_INT < 19) {
                 alarmManager.set(AlarmManager.RTC_WAKEUP,
                         //startMillis,
-                        cal.getTimeInMillis() + 2 * 1000, pendingIntent);
+                        cal.getTimeInMillis() + 50, pendingIntent);
             } else{
                 alarmManager.setWindow(AlarmManager.RTC_WAKEUP,
 //                        startMillis
-                        cal.getTimeInMillis() + 2 * 1000, windowLengthMillis, pendingIntent);
+                        cal.getTimeInMillis() + 50, windowLengthMillis, pendingIntent);
             }
 
             // 現在時刻がtimeを過ぎていた場合、次のアラーム時刻をtimeにセットする

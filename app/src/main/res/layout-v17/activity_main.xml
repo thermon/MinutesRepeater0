@@ -19,10 +19,10 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <CheckBox
-            android:id="@+id/TimeZone1_Enable"
+            android:id="@+id/TimeZone1Enable"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/TimeZone1_End_Text"
+            android:layout_alignEnd="@+id/TimeZone1EndTimeValue"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
             android:text="@string/checkBox_Time1"
@@ -30,95 +30,95 @@
             tools:layout_editor_absoluteY="1dp" />
 
         <Button
-            android:id="@+id/TimeZone1_Start"
+            android:id="@+id/TimeZone1StartTimeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_below="@+id/TimeZone1_Enable"
-            android:layout_toStartOf="@+id/TimeZone2_Start_Text"
+            android:layout_below="@+id/TimeZone1Enable"
+            android:layout_toStartOf="@+id/TimeZone2StartTimeValue"
             android:text="@string/button_StartTime1"
             android:textSize="12sp" />
 
         <TextView
-            android:id="@+id/TimeZone1_Start_Text"
+            android:id="@+id/TimeZone1StartTimeValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/TimeZone1_Start"
-            android:layout_below="@+id/TimeZone1_Enable"
-            android:layout_toEndOf="@+id/TimeZone1_Start"
+            android:layout_alignBottom="@+id/TimeZone1StartTimeButton"
+            android:layout_below="@+id/TimeZone1Enable"
+            android:layout_toEndOf="@+id/TimeZone1StartTimeButton"
             android:gravity="center_vertical|center_horizontal"
             android:text="@string/textView_StartTime1"
             android:textSize="24sp"
             android:textStyle="bold" />
 
         <Button
-            android:id="@+id/TImeZone1_End"
+            android:id="@+id/TImeZone1EndTimeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/TimeZone1_Enable"
-            android:layout_toEndOf="@+id/TimeZone1_Start_Text"
+            android:layout_below="@+id/TimeZone1Enable"
+            android:layout_toEndOf="@+id/TimeZone1StartTimeValue"
             android:text="@string/button_EndTime1"
             android:textSize="12sp" />
 
         <TextView
-            android:id="@+id/TimeZone1_End_Text"
+            android:id="@+id/TimeZone1EndTimeValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/TImeZone1_End"
-            android:layout_alignEnd="@+id/TImeZone2_End_Text"
-            android:layout_alignTop="@+id/TImeZone1_End"
-            android:layout_toEndOf="@+id/TImeZone1_End"
+            android:layout_alignBottom="@+id/TImeZone1EndTimeButton"
+            android:layout_alignEnd="@+id/TImeZone2EndTimeValue"
+            android:layout_alignTop="@+id/TImeZone1EndTimeButton"
+            android:layout_toEndOf="@+id/TImeZone1EndTimeButton"
             android:gravity="center_vertical|center_horizontal"
             android:text="@string/textView_EndTime1"
             android:textSize="24sp"
             android:textStyle="bold" />
 
         <CheckBox
-            android:id="@+id/TimeZone2_Enable"
+            android:id="@+id/TimeZone2Enable"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/TimeZone1_End_Text"
+            android:layout_alignEnd="@+id/TimeZone1EndTimeValue"
             android:layout_alignParentStart="true"
-            android:layout_below="@+id/TimeZone1_Start"
+            android:layout_below="@+id/TimeZone1StartTimeButton"
             android:text="@string/checkBox_Time2" />
 
         <Button
-            android:id="@+id/TimeZone2_Start"
+            android:id="@+id/TimeZone2StartTimeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_below="@+id/TimeZone2_Enable"
+            android:layout_below="@+id/TimeZone2Enable"
             android:text="@string/button_StartTime2"
             android:textSize="12sp" />
 
         <TextView
-            android:id="@+id/TimeZone2_Start_Text"
+            android:id="@+id/TimeZone2StartTimeValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/TImeZone2_End"
-            android:layout_alignTop="@+id/TImeZone2_End"
-            android:layout_toEndOf="@+id/TimeZone2_Start"
+            android:layout_alignBottom="@+id/TImeZone2EndTimeButton"
+            android:layout_alignTop="@+id/TImeZone2EndTimeButton"
+            android:layout_toEndOf="@+id/TimeZone2StartTimeButton"
             android:gravity="center_vertical|center_horizontal"
             android:text="@string/textView_StartTime2"
             android:textSize="24sp"
             android:textStyle="bold" />
 
         <Button
-            android:id="@+id/TImeZone2_End"
+            android:id="@+id/TImeZone2EndTimeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/TimeZone2_Enable"
-            android:layout_toEndOf="@+id/TimeZone2_Start_Text"
+            android:layout_below="@+id/TimeZone2Enable"
+            android:layout_toEndOf="@+id/TimeZone2StartTimeValue"
             android:text="@string/button_EndTime2"
             android:textSize="12sp" />
 
         <TextView
-            android:id="@+id/TImeZone2_End_Text"
+            android:id="@+id/TImeZone2EndTimeValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/TImeZone2_End"
-            android:layout_below="@+id/TimeZone2_Enable"
-            android:layout_toEndOf="@+id/TImeZone2_End"
+            android:layout_alignBottom="@+id/TImeZone2EndTimeButton"
+            android:layout_below="@+id/TimeZone2Enable"
+            android:layout_toEndOf="@+id/TImeZone2EndTimeButton"
             android:gravity="center_vertical|center_horizontal"
             android:text="@string/textView_EndTime2"
             android:textSize="24sp"
@@ -128,9 +128,9 @@
             android:id="@+id/ReferencedToTheHour"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/TImeZone2_End_Text"
+            android:layout_alignEnd="@+id/TImeZone2EndTimeValue"
             android:layout_alignParentStart="true"
-            android:layout_below="@+id/TimeZone2_Start"
+            android:layout_below="@+id/TimeZone2StartTimeButton"
             android:text="@string/checkbox_ReferencedToTheHour"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -162,7 +162,7 @@
             android:id="@+id/intervalIncrease"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/TImeZone2_End_Text"
+            android:layout_alignEnd="@+id/TImeZone2EndTimeValue"
             android:layout_below="@+id/intervalSeekBar"
             android:maxWidth="5dp"
             android:text="@string/increase"
@@ -220,12 +220,12 @@
 
         <TextView
             android:id="@+id/nextTime"
-            android:layout_width="wrap_content"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
             android:layout_below="@+id/intervalIncrease"
             android:layout_toStartOf="@+id/intervalIncrease"
             android:foregroundGravity="left|center_vertical"
-            android:gravity="start|center_vertical"
+            android:gravity="center_vertical|center"
             android:paddingLeft="4dp"
             android:paddingRight="4dp"
             android:text="@string/textView_Time"
@@ -238,9 +238,11 @@
 
         <TextView
             android:id="@+id/nextTimeOffset"
-            android:layout_width="wrap_content"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/nextTime"
+            android:layout_alignEnd="@+id/intervalIncrease"
+            android:layout_alignRight="@+id/intervalIncrease"
             android:layout_toEndOf="@+id/nextTime"
             android:text="@string/textView_Offset"
             android:textSize="14sp" />
@@ -261,13 +263,13 @@
 
         <TextView
             android:id="@+id/nowTime"
-            android:layout_width="wrap_content"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/nowTimeButton"
             android:layout_alignStart="@+id/nextTime"
             android:layout_alignTop="@+id/nowTimeButton"
             android:layout_toStartOf="@+id/nowTimeOffset"
-            android:gravity="start|center_vertical"
+            android:gravity="center_vertical|center"
             android:paddingLeft="4dp"
             android:paddingRight="4dp"
             android:text="@string/textView_Time"
@@ -278,11 +280,14 @@
 
         <TextView
             android:id="@+id/nowTimeOffset"
-            android:layout_width="wrap_content"
+            android:layout_width="52dp"
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/nowTime"
             android:layout_alignBottom="@+id/nowTime"
-            android:layout_toEndOf="@+id/nextTime"
+            android:layout_alignEnd="@+id/nextTimeOffset"
+            android:layout_alignLeft="@+id/nextTimeOffset"
+            android:layout_alignRight="@+id/nextTimeOffset"
+            android:layout_alignStart="@+id/nextTimeOffset"
             android:text="@string/textView_Offset"
             android:textSize="14sp" />
 
