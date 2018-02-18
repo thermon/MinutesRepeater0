@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
@@ -23,13 +24,13 @@ import static com.example.therm.myApplication.sdf_yyyyMMddHHmmss;
 public class myService extends Service {
     // private Notification notification;
     minutesRepeater repeater = null;
-    private String className = "AlarmService";
+    private String className = "";
     // 繰り返し間隔、1分
     private long repeatPeriod = 1000*60;
     private int offset =-2;
     // setWindow()でのwindow幅、4秒
     private long windowLengthMillis = 1000*4;
-    private Context context;
+    private Context context = null;
     //    private int [][] zones;
     private int[][][] zonesArray;
     private int [][] zones;
@@ -37,57 +38,46 @@ public class myService extends Service {
     private Calendar time=null;
     private boolean basedOnHour;
     private int intervalProgress;
-    private NotificationManager notificationManager;
+    private NotificationManager notificationManager = null;
 
+    public void onDestroy() {
+        super.onDestroy();
+        stopSelf();
+        Log.d(className, "destroyed");
+    }
+
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
-    @Override
-    public void onCreate() {
-        className = myApplication.getClassName();
-        super.onCreate();
-        Log.d(className, "created");
-        context = getApplicationContext();
-        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // if (repeater==null) repeater = new minutesRepeater(context);
+    /*
+    public myService() {
+        super(myApplication.getClassName());
     }
-
-
-    public void onDestroy() {
-        super.onDestroy();
-//        stopSelf();
-        Log.d(className, "destroied");
+    @Override
+    protected void onHandleIntent(@Nullable Intent intent) {
+        start(intent);
+    }
+*/
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        start(intent);
+        //return super.onStartCommand(intent, flags, startId);
+        return START_REDELIVER_INTENT;
     }
 
     // Alarm によって呼び出される
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        repeater = myApplication.getRepeater();
-//        repeater =new minutesRepeater(getApplicationContext());
-//        repeater.loadData();
-            /*
-        Log.d(className, "start");
-        Bundle bundle = intent.getExtras();
-        if (bundle != null) {
-            Set<String> keys = bundle.keySet();
-            for (String key : keys) {
-                Log.d(className,
-                        String.format(Locale.US, "key=%s,value=%s", key, bundle.get(key).toString())
-                );
-            }
-        }
-*/
-            /*
-        StackTraceElement[] ste = new Throwable().getStackTrace();
-        for (int i = 1; i < ste.length; i++) {
-            Log.d(className, "called:" + ste[i].getClassName() + "." + ste[i].getMethodName() +
-                    ", line " + ste[i].getLineNumber() + " of " + ste[i].getFileName());
-        }
-        */
 
-//        Boolean stopFlag = intent.getBooleanExtra("StopAlarm", false);
+    void start(@Nullable Intent intent) {
+        if (className.equals("")) className = myApplication.getClassName();
+        Log.d(className, "start");
+        if (context == null) context = getApplicationContext();
+        if (notificationManager == null)
+            notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        repeater = new minutesRepeater(this);
 
         // アラーム時刻が設定されていないときはサービスを止める
         if (intent == null ||
@@ -160,16 +150,13 @@ public class myService extends Service {
         }
 
         //if (time!=null) time.add(Calendar.SECOND,offset);
-        Log.d(className, String.format("Broadcast time=%s",(time!=null) ? sdf_HHmmss.format(time.getTime()): "undefined"));
+        Log.d(className, String.format("Broadcast time=%s", (time != null) ? sdf_HHmmss.format(time.getTime()) : "undefined"));
         // Local Broadcast で発信する
         // 次回アラーム時刻をAlarmEventアクションを受け取れるレシーバーに送る
 
         Intent messageIntent = new Intent("AlarmTimeChanged");
-        messageIntent.putExtra("time",(time!=null) ? time.getTimeInMillis(): -1);
+        messageIntent.putExtra("time", (time != null) ? time.getTimeInMillis() : -1);
         LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-
-        // return super.onStartCommand(intent, flags, startId);
-        return START_REDELIVER_INTENT;
     }
 
     // 次のアラームの設定
@@ -196,9 +183,9 @@ public class myService extends Service {
             Log.d(className, "next AlarmService trigger time=" + sdf_yyyyMMddHHmmss.format(cal.getTimeInMillis()));
 
             // repeatPeriod間隔でAlarmServiceを起動する
-            long startMillis;
-            startMillis = System.currentTimeMillis();
-            startMillis+=repeatPeriod - startMillis % repeatPeriod;
+            // long startMillis;
+            // startMillis = System.currentTimeMillis();
+            // startMillis+=repeatPeriod - startMillis % repeatPeriod;
             // SDK 19 以下ではsetを使う
             // 次回鳴動時刻の更新時刻を一瞬遅らせる（負荷低減のため？）
             if(android.os.Build.VERSION.SDK_INT < 19) {
@@ -246,18 +233,7 @@ public class myService extends Service {
 
         notification.flags = Notification.FLAG_ONGOING_EVENT;
         notificationManager.notify(R.string.app_name, notification);
-
-        /*
-        // 現在のRuntimeオブジェクトを取得
-        Runtime rt = Runtime.getRuntime();
-        // システムメモリ内の空きバイト数の見積もりを返す
-        Log.d(className, String.format("runtime free  memory=%d", rt.freeMemory()));
-        Log.d(className, String.format("native heap free memory=%d", Debug.getNativeHeapFreeSize()));
-*/
-        // gcを走らせる
-        // rt.gc();
-        // システムメモリ内の空きバイト数の見積もりを返す
-        // Log.d(className,String.format("after GC memory=%d",rt.freeMemory()));
+        stopSelf();
     }
 
     private void stopAlarmService(){
@@ -296,7 +272,7 @@ public class myService extends Service {
         notification.flags = 0;
         notificationManager.cancel(R.string.app_name);
 
-        Log.d(className, "stop");
+        Log.d(className, "alarm stop");
     }
 
 }

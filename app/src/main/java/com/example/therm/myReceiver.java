@@ -39,8 +39,7 @@ public class myReceiver extends BroadcastReceiver {
                     new ringClass(context).ring();
                     break;
             }
-            minutesRepeater repeater = myApplication.getRepeater();
-            // repeater.loadData();
+            minutesRepeater repeater = new minutesRepeater(context);
 
             boolean b = repeater.getExecuteOnBootCompleted();
             if (bootCompletedExecute && b) {

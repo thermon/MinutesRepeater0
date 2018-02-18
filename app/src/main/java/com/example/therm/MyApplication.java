@@ -1,14 +1,13 @@
 package com.example.therm;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.util.Log;
 
-import com.example.therm.myApplication.Hour_Minute;
-import com.example.therm.myApplication.Start_End;
+import com.example.therm.myApplication.timeFieldEnum;
+import com.example.therm.myApplication.timeIndexEnum;
 import com.google.gson.Gson;
 
 import org.jetbrains.annotations.Contract;
@@ -19,15 +18,13 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import static com.example.therm.MainActivity.PreferencesName;
-import static com.example.therm.MainActivity.buttonsIdArray;
+import static com.example.therm.MainActivity.viewIdArray;
 
-public class myApplication extends Application {
+public class myApplication extends android.app.Application {
     // 時刻表示のフォーマット
     public static SimpleDateFormat sdf_HHmm = new SimpleDateFormat("HH:mm", Locale.US);
     public static SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss Z", Locale.US);
     public static SimpleDateFormat sdf_yyyyMMddHHmmss = new SimpleDateFormat("yyyy.MM.dd(E) HH:mm:ss Z", Locale.JAPANESE);
-    private static minutesRepeater repeater;
-    Application instance = null;
 
     static int[] div_qr(int a, int b) {
         int m = a % b;
@@ -38,39 +35,19 @@ public class myApplication extends Application {
         return Thread.currentThread().getStackTrace()[3].getClassName().replace("$", ".");
     }
 
-    static minutesRepeater getRepeater() {
-        return repeater;
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
-        instance = this;
-
-        repeater = new minutesRepeater(this);
-        repeater.loadData();
-
-        // setupLeakCanary();
     }
 
-    public enum Hour_Minute {
+    public enum timeFieldEnum {
         hour,
         minute
     }
 
-    public enum Start_End {
+    public enum timeIndexEnum {
         start,
         end
-    }
-
-    public enum Button_TextView {
-        button,
-        textView
-    }
-
-    public enum Checkbox_Times {
-        checkbox,
-        times
     }
 }
 
@@ -86,8 +63,8 @@ class minutesRepeater {
     private String className;
     private Context MainContext;
     private SharedPreferences sharedPreferences;
-    private int[][][] zonesArray = new int[buttonsIdArray.length][][];
-    private boolean[] zonesEnable = new boolean[buttonsIdArray.length];
+    private int[][][] zonesArray = new int[viewIdArray.length][][];
+    private boolean[] zonesEnable = new boolean[viewIdArray.length];
     private int intervalProgress = 0;
     private int intervalMinutes = 2;
     private boolean basedOnHour = false;
@@ -105,6 +82,7 @@ class minutesRepeater {
         className = myApplication.getClassName();
         MainContext = context;
         sharedPreferences = MainContext.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE);
+        loadData();
     }
 
     int[][][] getZonesArray() {
@@ -170,7 +148,7 @@ class minutesRepeater {
         editor.apply();
     }
 
-    void loadData() {
+    private void loadData() {
         Gson gson = new Gson();
         zonesArray = null;
         zonesArray = gson.fromJson(sharedPreferences.getString("zonesArray", null), int[][][].class);
@@ -182,12 +160,12 @@ class minutesRepeater {
         Log.d("Preferences", "load intervalSeekBar:" + intervalProgress);
 
         if (zonesArray == null) {
-            zonesArray = new int[buttonsIdArray.length][][];
+            zonesArray = new int[viewIdArray.length][][];
             for (int i = 0; i < zonesArray.length; i++) {
                 zonesArray[i] = new int[][]{{0, 0}, {0, 0}};
             }
         }
-        if (zonesEnable == null) zonesEnable = new boolean[buttonsIdArray.length];
+        if (zonesEnable == null) zonesEnable = new boolean[viewIdArray.length];
     }
 
     // シークバーの値から鳴動間隔に変換
@@ -224,19 +202,18 @@ class minutesRepeater {
         time.set(Calendar.SECOND, 0);
         time.set(Calendar.MILLISECOND, 0);
 
-        Calendar nextTime = time;
         // basedOnHourがtrueなら、毎時00分を基準にする
         if (basedOnHour) {
-            int minute = nextTime.get(Calendar.MINUTE);
+            int minute = time.get(Calendar.MINUTE);
             int modulo = minute % interval;
             if (modulo > 0) {
-                nextTime.add(Calendar.MINUTE, -modulo);
+                time.add(Calendar.MINUTE, -modulo);
             }
         }
-        nextTime.add(Calendar.MINUTE, interval);
+        time.add(Calendar.MINUTE, interval);
         // nextTime += interval;
 
-        Log.d("getNextAlarmTime", "next=" + myApplication.sdf_yyyyMMddHHmmss.format(nextTime.getTimeInMillis()));
+        Log.d("getNextAlarmTime", "next=" + myApplication.sdf_yyyyMMddHHmmss.format(time.getTimeInMillis()));
         // アラーム時刻変更
         // 現在時刻と時間帯をもとにアラーム時刻を設定
         ArrayList<Calendar> alarmTime = new ArrayList<>();
@@ -249,22 +226,22 @@ class minutesRepeater {
             Calendar times[] = new Calendar[2];
             for (int j = 0; j < times.length; j++) {
                 times[j] = Calendar.getInstance();
-                times[j].set(Calendar.HOUR_OF_DAY, zone[j][Hour_Minute.hour.ordinal()]);
-                times[j].set(Calendar.MINUTE, zone[j][Hour_Minute.minute.ordinal()]);
+                times[j].set(Calendar.HOUR_OF_DAY, zone[j][timeFieldEnum.hour.ordinal()]);
+                times[j].set(Calendar.MINUTE, zone[j][timeFieldEnum.minute.ordinal()]);
                 times[j].set(Calendar.SECOND, 0);
                 times[j].set(Calendar.MILLISECOND, 0);
             }
-            Calendar StartTime = times[Start_End.start.ordinal()];
-            Calendar EndTime = times[Start_End.end.ordinal()];
+            Calendar StartTime = times[timeIndexEnum.start.ordinal()];
+            Calendar EndTime = times[timeIndexEnum.end.ordinal()];
 
             if (EndTime.compareTo(StartTime) > 0) { // 時間帯が日を跨がない場合
-                if (nextTime.compareTo(EndTime) >= 0) {  // 時間帯終了後のとき
+                if (time.compareTo(EndTime) >= 0) {  // 時間帯終了後のとき
                     // 開始時刻及び終了時刻は翌日になる
                     StartTime.add(Calendar.DATE, 1);
                     EndTime.add(Calendar.DATE, 1);
                 }
             } else {    // 時間帯が日を跨ぐ場合
-                if (nextTime.compareTo(EndTime) < 0) {   // 予定時刻が終了時刻より前　＝　時間帯を過ぎていない
+                if (time.compareTo(EndTime) < 0) {   // 予定時刻が終了時刻より前　＝　時間帯を過ぎていない
                     // 開始時刻は前日になる
                     StartTime.add(Calendar.DATE, -1);
                 } else {
@@ -275,10 +252,10 @@ class minutesRepeater {
 
             Log.d("getNextAlarmTime", String.format("start[%d]=%s", i, myApplication.sdf_yyyyMMddHHmmss.format(StartTime.getTimeInMillis())));
             Log.d("getNextAlarmTime", String.format("  end[%d]=%s", i, myApplication.sdf_yyyyMMddHHmmss.format(EndTime.getTimeInMillis())));
-            if (EndTime.compareTo(nextTime) > 0 && nextTime.compareTo(StartTime) >= 0) {
+            if (EndTime.compareTo(time) > 0 && time.compareTo(StartTime) >= 0) {
                 // 次回予定時刻がタイムゾーン内にある場合
-                alarmTime.add(nextTime);
-                Log.d("getNextAlarmTime", String.format(" next[%d]:in =%s", i, myApplication.sdf_yyyyMMddHHmmss.format(nextTime.getTimeInMillis())));
+                alarmTime.add(time);
+                Log.d("getNextAlarmTime", String.format(" next[%d]:in =%s", i, myApplication.sdf_yyyyMMddHHmmss.format(time.getTimeInMillis())));
             } else {
                 // 現在時刻がタイムゾーン外の場合、次回予定時刻より遅い直近の開始時刻を探す。
                 if (basedOnHour) {
@@ -304,7 +281,7 @@ class minutesRepeater {
         // 開始時刻リストでループ
         for (Calendar t : alarmTime) {
             // 開始時刻が予定時刻よりも早い && Start1が開始時刻よりも早いなら、Start1に開始時刻を入れる
-            if (t.compareTo(nextTime) < 0) {
+            if (t.compareTo(time) < 0) {
                 if (Start1.compareTo(t) < 0) Start1 = t;
             }
             // 開始時刻が予定時刻よりも遅い && Start2が開始時刻よりも遅いなら、Start2に開始時刻を入れる
@@ -315,10 +292,9 @@ class minutesRepeater {
         // 全ての開始時刻が予定時刻よりも遅いなら、開始時刻の中で一番早い時刻を予定時刻にする
         // 予定時刻よりも早い開始時刻があれば、そのなかで一番遅い開始時刻を予定時刻にする
 
-        final Calendar Start = (Start1.getTimeInMillis() == 0) ? Start2 : Start1;
         // Start.set(Calendar.SECOND, 0);
         // Start.set(Calendar.MILLISECOND, 0);
-        return Start;
+        return (Start1.getTimeInMillis() == 0) ? Start2 : Start1;
     }
 
     void AlarmSet(Calendar time) {
@@ -330,6 +306,7 @@ class minutesRepeater {
         // new Intent("service");
 
         if (time != null) {
+            // アラームの停止を解除
 //            time.set(Calendar.SECOND, 0);
 //            time.set(Calendar.MILLISECOND, 0);
 
@@ -345,8 +322,10 @@ class minutesRepeater {
             MainContext.startService(serviceIntent);
 
         } else {
-            // Alarm の停止を解除
+            // アラーム予約を解除
             MainContext.startService(serviceIntent);
+            // アラームを停止
+            MainContext.stopService(serviceIntent);
 
         }
     }

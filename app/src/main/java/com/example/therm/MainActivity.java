@@ -23,6 +23,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.ToggleButton;
 
+import com.example.therm.myApplication.timeFieldEnum;
+import com.example.therm.myApplication.timeIndexEnum;
+
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,7 +43,8 @@ public class MainActivity extends AppCompatActivity {
     // 最長鳴動間隔
     public static final int[] intervalMin = {1, intervalList[0]};
     static public String PreferencesName = "minutesRepeater";
-    static int[][][] buttonsIdArray = new int[][][]
+    // period(0-),type(CheckBox=0,Button=1,ViewText=2),time(start=0,end=1)を添字に持つ3次元配列
+    static int[][][] viewIdArray = new int[][][]
             {
                     new int[][]{
                             new int[]{R.id.TimeZone1Enable},
@@ -154,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // リピーター鳴動用インスタンス初期化
-        repeater = myApplication.getRepeater();
+        repeater = new minutesRepeater(this);
 
         seekBarProgress = repeater.getIntervalProgress();
         BasedOnMinute_00 = repeater.getBasedOnHour();
@@ -167,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         getFieldValues();
 
         myPeriodsArray timeZoneArray = new myPeriodsArray(
-                buttonsIdArray,
+                viewIdArray,
                 repeater.getZonesEnable(),
                 repeater.getZonesArray()
         );
@@ -316,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
             mTimer.cancel();
             mTimer = null;
         }
+
 //        repeater.releaseSound();
         repeater = null;
     }
@@ -381,20 +386,10 @@ public class MainActivity extends AppCompatActivity {
             )
     };
 */
-    enum buttonsArrayInnerKey {
+    enum viewPartsType {
         CheckBox,
         Buttons,
         Fields
-    }
-
-    enum timeFieldEnum {
-        Hour,
-        Minute
-    }
-
-    enum timeIndexEnum {
-        Start,
-        End
     }
 
     // 時刻データを、ボタンやテキストビューの情報と一緒に保持するクラス
@@ -431,7 +426,7 @@ public class MainActivity extends AppCompatActivity {
                                     public void onTimeSet(final TimePicker view, final int hourOfDay, final int minute) {
                                         setTime(hourOfDay, minute)
                                                 .getCaller()
-                                                .setTime(timeIndex, hourOfDay, minute);
+                                                .setTime(getTimeIndex(), hourOfDay, minute);
                                     }
                                 }, d.getHours(), d.getMinutes(), true);
                         dialog.show();
@@ -442,9 +437,11 @@ public class MainActivity extends AppCompatActivity {
             });
 
             textView = findViewById(textViewId);
+            int hourIdx = timeFieldEnum.hour.ordinal();
+            int minuteIdx = timeFieldEnum.minute.ordinal();
             setTime(
-                    time[timeFieldEnum.Hour.ordinal()],
-                    time[timeFieldEnum.Minute.ordinal()]
+                    time[hourIdx],
+                    time[minuteIdx]
             );
         }
 
@@ -469,6 +466,10 @@ public class MainActivity extends AppCompatActivity {
         myPeriod getCaller() {
             return caller;
         }
+
+        int getTimeIndex() {
+            return timeIndex;
+        }
     }
 
     // 一つの時間帯を、チェックボックスや配下の時刻データとともに保持するクラス
@@ -482,7 +483,7 @@ public class MainActivity extends AppCompatActivity {
                 final myPeriodsArray caller,
                 final int periodNumber,
                 final boolean enableData,
-                final int buttonsIdArray[][],
+                final int viewIdArray[][],
                 final int timeArray[][]
         ) {
             className = myApplication.getClassName();
@@ -490,7 +491,7 @@ public class MainActivity extends AppCompatActivity {
             this.caller = caller;
             this.periodNumber = periodNumber;
 
-            checkBox = findViewById(buttonsIdArray[buttonsArrayInnerKey.CheckBox.ordinal()][0]);
+            checkBox = findViewById(viewIdArray[viewPartsType.CheckBox.ordinal()][0]);
             checkBox.setChecked(enableData);
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -507,8 +508,8 @@ public class MainActivity extends AppCompatActivity {
                 new myTime(
                         this,
                         i,
-                        buttonsIdArray[buttonsArrayInnerKey.Buttons.ordinal()][i],
-                        buttonsIdArray[buttonsArrayInnerKey.Fields.ordinal()][i],
+                        viewIdArray[viewPartsType.Buttons.ordinal()][i],
+                        viewIdArray[viewPartsType.Fields.ordinal()][i],
                         timeArray[i]
                 );
             }
@@ -536,23 +537,23 @@ public class MainActivity extends AppCompatActivity {
         private String className;
 
         myPeriodsArray(
-                final int[][][] buttonsIdArray,
-                final boolean[] enableDatas,
-                final int[][][] timeZoneDatas
+                final int[][][] viewIdArray,
+                final boolean[] enableData,
+                final int[][][] timeZoneData
         ) {
             className = myApplication.getClassName();
 
             // データ構造
-            timeZoneTable = timeZoneDatas;
-            enableArray = enableDatas;
+            timeZoneTable = timeZoneData;
+            enableArray = enableData;
 
-            for (int periodNumber = 0; periodNumber < buttonsIdArray.length; periodNumber++) {
+            for (int periodNumber = 0; periodNumber < viewIdArray.length; periodNumber++) {
                 new myPeriod(
                         this,
                         periodNumber,
-                        enableDatas[periodNumber],
-                        buttonsIdArray[periodNumber],
-                        timeZoneDatas[periodNumber]
+                        enableData[periodNumber],
+                        viewIdArray[periodNumber],
+                        timeZoneData[periodNumber]
                 );
             }
         }
@@ -577,8 +578,11 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < timeZoneTable.length; i++) {
                 for (Enum<timeIndexEnum> _timeIndex : timeIndexEnum.values()) {
                     for (Enum<timeFieldEnum> _timeField : timeFieldEnum.values()) {
-                        Log.d(className, String.format("timeZoneTable[%d][%d][%d]=%d", i, _timeIndex.ordinal(), _timeField.ordinal(),
-                                timeZoneTable[i][_timeIndex.ordinal()][_timeField.ordinal()]));
+                        int j = _timeIndex.ordinal();
+                        int k = _timeField.ordinal();
+                        Log.d(className, String.format("timeZoneTable[%d][%d][%d]=%d",
+                                i, j, k, timeZoneTable[i][j][k]
+                        ));
                     }
                 }
             }
