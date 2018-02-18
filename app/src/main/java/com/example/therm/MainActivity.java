@@ -496,7 +496,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                     Log.d("TimeZone", String.format("%s:%b", compoundButton.getText(), b));
-                    setEnable(b).getCaller().setEnable(periodNumber, b);
+                    setEnable(b)
+                            .getCaller()
+                            .setEnable(periodNumber, b);
                 }
             });
 
@@ -585,7 +587,5 @@ public class MainActivity extends AppCompatActivity {
 
             return this;
         }
-
-
     }
 }
