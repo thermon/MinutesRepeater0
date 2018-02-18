@@ -24,7 +24,6 @@ import android.widget.TimePicker;
 import android.widget.ToggleButton;
 
 import java.text.ParseException;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -167,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         // フィールドの値から変数を初期化
         getFieldValues();
 
-        myTimeZoneArray timeZoneArray = new myTimeZoneArray(
+        myPeriodsArray timeZoneArray = new myPeriodsArray(
                 buttonsIdArray,
                 repeater.getZonesEnable(),
                 repeater.getZonesArray()
@@ -399,20 +398,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 時刻データを、ボタンやテキストビューの情報と一緒に保持するクラス
-    class myTimeUI {
+    class myTime {
 
         private String className = "";
-        private myTimeZoneUI caller = null;
+        private myPeriod caller = null;
         private Button button = null;
         private TextView textView = null;
         private int timeIndex = 0;
         private int hour = 0;
         private int minute = 0;
 
-        private SimpleEntry<Integer, int[]> time;
-
-        myTimeUI(
-                final myTimeZoneUI caller,
+        myTime(
+                final myPeriod caller,
                 final int timeIndex,
                 final int buttonId,
                 final int textViewId,
@@ -432,8 +429,9 @@ public class MainActivity extends AppCompatActivity {
                                 new TimePickerDialog.OnTimeSetListener() {
                                     @Override
                                     public void onTimeSet(final TimePicker view, final int hourOfDay, final int minute) {
-                                        setTime(hourOfDay, minute);
-                                        caller.setTime(timeIndex, hourOfDay, minute);
+                                        setTime(hourOfDay, minute)
+                                                .getCaller()
+                                                .setTime(timeIndex, hourOfDay, minute);
                                     }
                                 }, d.getHours(), d.getMinutes(), true);
                         dialog.show();
@@ -450,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
             );
         }
 
-        myTimeUI setTime(int hour, int minute) {
+        myTime setTime(int hour, int minute) {
             this.hour = hour;
             this.minute = minute;
 
@@ -468,19 +466,20 @@ public class MainActivity extends AppCompatActivity {
             return minute;
         }
 
+        myPeriod getCaller() {
+            return caller;
+        }
     }
 
     // 一つの時間帯を、チェックボックスや配下の時刻データとともに保持するクラス
-    class myTimeZoneUI {
+    class myPeriod {
         private String className;
         private CheckBox checkBox;
-        private SimpleEntry<Integer, int[][]> timeZone;
-        private myTimeZoneArray caller;
+        private myPeriodsArray caller;
         private int periodNumber;
-        private SimpleEntry<Integer, Boolean> enable;
 
-        myTimeZoneUI(
-                final myTimeZoneArray caller,
+        myPeriod(
+                final myPeriodsArray caller,
                 final int periodNumber,
                 final boolean enableData,
                 final int buttonsIdArray[][],
@@ -497,14 +496,13 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                     Log.d("TimeZone", String.format("%s:%b", compoundButton.getText(), b));
-                    setEnable(b);
-                    caller.setEnable(periodNumber, b);
+                    setEnable(b).getCaller().setEnable(periodNumber, b);
                 }
             });
 
             for (Enum<timeIndexEnum> _timeIndex : timeIndexEnum.values()) {
                 int i = _timeIndex.ordinal();
-                new myTimeUI(
+                new myTime(
                         this,
                         i,
                         buttonsIdArray[buttonsArrayInnerKey.Buttons.ordinal()][i],
@@ -514,24 +512,28 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        myTimeZoneUI setEnable(boolean b) {
+        myPeriodsArray getCaller() {
+            return caller;
+        }
+
+        myPeriod setEnable(boolean b) {
             checkBox.setChecked(b);
             return this;
         }
 
-        myTimeZoneUI setTime(int timeIndex, int hour, int minute) {
+        myPeriod setTime(int timeIndex, int hour, int minute) {
             caller.setTime(periodNumber, timeIndex, hour, minute);
             return this;
         }
     }
 
     // 複数の時間帯データを保持するクラス
-    class myTimeZoneArray {
+    class myPeriodsArray {
         private int timeZoneTable[][][];
         private boolean enableArray[];
         private String className;
 
-        myTimeZoneArray(
+        myPeriodsArray(
                 final int[][][] buttonsIdArray,
                 final boolean[] enableDatas,
                 final int[][][] timeZoneDatas
@@ -543,7 +545,7 @@ public class MainActivity extends AppCompatActivity {
             enableArray = enableDatas;
 
             for (int periodNumber = 0; periodNumber < buttonsIdArray.length; periodNumber++) {
-                new myTimeZoneUI(
+                new myPeriod(
                         this,
                         periodNumber,
                         enableDatas[periodNumber],
@@ -553,7 +555,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        myTimeZoneArray setEnable(
+        myPeriodsArray setEnable(
                 final int periodNumber,
                 final boolean periodEnable
         ) {
@@ -567,7 +569,7 @@ public class MainActivity extends AppCompatActivity {
             return this;
         }
 
-        myTimeZoneArray setTime(int periodNumber, int timeIndex, int hour, int minute) {
+        myPeriodsArray setTime(int periodNumber, int timeIndex, int hour, int minute) {
             timeZoneTable[periodNumber][timeIndex] = new int[]{hour, minute};
 
             for (int i = 0; i < timeZoneTable.length; i++) {
