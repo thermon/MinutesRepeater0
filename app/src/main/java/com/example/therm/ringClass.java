@@ -58,13 +58,15 @@ class ringClass {
 
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
-        int[] minArray = myApplication.div_qr(minute, 15);
+        long[] minArray = new myApplication.div_qr(minute)
+                .divide(15)
+                .getArray();
 
         hour %= 12;
         if (hour == 0) hour = 12;
 
 //        int count[] = {hour, min_15, min_1}; // 鳴動回数
-        counts = new int[]{hour, minArray[0], minArray[1]}; // 鳴動回数
+        counts = new int[]{hour, (int) minArray[0], (int) minArray[1]}; // 鳴動回数
         soundLoad();
 
         mHT = new HandlerThread("repeater");
