@@ -20,7 +20,6 @@ import java.util.Locale;
 
 import static com.example.therm.MainActivity.PreferencesName;
 import static com.example.therm.MainActivity.viewIdArray;
-import static com.example.therm.myApplication.div_qr;
 import static com.example.therm.myApplication.getClassName;
 import static com.example.therm.myApplication.sdf_yyyyMMddHHmmss;
 
@@ -49,29 +48,6 @@ public class myApplication extends android.app.Application {
         end
     }
 
-    static class div_qr {
-        long num[];
-
-        div_qr(long a) {
-            num = new long[]{a};
-        }
-
-        div_qr divide(long b) {
-            long array[] = this.getArray();
-            num = new long[array.length + 1];
-
-            // 配列を拡張
-            System.arraycopy(array, 1, num, 2, array.length - 1);
-
-            num[0] = array[0] / b;
-            num[1] = array[0] % b;
-            return this;
-        }
-
-        long[] getArray() {
-            return num;
-        }
-    }
 }
 
 // ミニッツリピーター鳴動クラス

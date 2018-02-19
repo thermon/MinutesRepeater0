@@ -58,7 +58,7 @@ class ringClass {
 
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
-        long[] minArray = new myApplication.div_qr(minute)
+        long[] minArray = new div_qr(minute)
                 .divide(15)
                 .getArray();
 
