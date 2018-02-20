@@ -38,6 +38,7 @@ import static com.example.therm.myApplication.getClassName;
 import static com.example.therm.myApplication.sdf_HHmm;
 
 public class MainActivity extends AppCompatActivity {
+
     // 正時のときの鳴動間隔
     public static final int[] intervalList = {2, 3, 4, 5, 6, 10, 12, 15, 20, 30};
     // 最長鳴動間隔
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
                     }
             };
     public final int seekBarMax[] = {60 - intervalMin[0], intervalList.length - 1};
+
     public Timer mTimer;
     // 音関係の変数
     public minutesRepeater repeater;
@@ -120,15 +122,21 @@ public class MainActivity extends AppCompatActivity {
         int HH = cal.get(Calendar.HOUR_OF_DAY);
         int mm = cal.get(Calendar.MINUTE);
         int ss = cal.get(Calendar.SECOND);
-        int zz = cal.get(Calendar.ZONE_OFFSET);
         int SSS = cal.get(Calendar.MILLISECOND);
+        int zoneOffset = cal.get(Calendar.ZONE_OFFSET);
 
-        boolean zzf = (zz >= 0);
-        int zzm = (zz / (1000 * 60)) % 60;
-        int zzh = zz / (1000 * 60 * 60);
+        boolean zoneOffsetIsPositive = (zoneOffset >= 0);
+        if (!zoneOffsetIsPositive) zoneOffset = -zoneOffset;
+
+        int[] zoneArray = new div_qr(zoneOffset)
+                .divide(1000)
+                .divide(60)
+                .divide(60)
+                .getArray();
+
         String time = String.format(Locale.US, "%02d:%02d:%02d", HH, mm, ss);
         String timeSSS = String.format(Locale.US, "%03d", SSS);
-        String offset = String.format(Locale.US, "%c%02d%02d", (zzf ? '+' : '-'), zzh, zzm);
+        String offset = String.format(Locale.US, "%c%02d%02d", (zoneOffsetIsPositive ? '+' : '-'), zoneArray[0], zoneArray[1]);
 
         return new String[]{time, timeSSS, offset};
     }
