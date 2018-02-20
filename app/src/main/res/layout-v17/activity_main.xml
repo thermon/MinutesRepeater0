@@ -152,7 +152,9 @@
             android:layout_width="wrap_content"
             android:layout_height="24dp"
             android:layout_alignEnd="@+id/intervalIncrease"
+            android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
+            android:layout_alignRight="@+id/intervalIncrease"
             android:layout_below="@+id/textView"
             android:max="58"
             android:visibility="visible"
@@ -191,7 +193,8 @@
             android:id="@+id/intervalNumber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignStart="@+id/intervalIncrease"
+            android:layout_alignEnd="@+id/intervalSeekBar"
+            android:layout_alignRight="@+id/intervalSeekBar"
             android:layout_below="@+id/ReferencedToTheHour"
             android:gravity="end"
             android:paddingEnd="8dp"
@@ -292,6 +295,7 @@
             android:textSize="14sp" />
 
         <Space
+            android:id="@+id/space2"
             android:layout_width="120dp"
             android:layout_height="wrap_content"
             android:layout_above="@+id/textView2"

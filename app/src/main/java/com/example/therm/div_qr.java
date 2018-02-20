@@ -1,32 +1,40 @@
 package com.example.therm;
 
+import java.util.ArrayList;
+
 // 割り算の商と余りを配列に保持するクラス
 final class div_qr {
 
-    private long num[];
+    private ArrayList<Integer> num = new ArrayList<>(5);
 
     // コンストラクタ：割られる数を入れる
-    div_qr(long a) {
-        num = new long[]{a};
+    div_qr(int a) {
+        num.add(a);
     }
 
     // divideメソッド：割る数を入れて割り算を実行する
-    div_qr divide(long b) {
-        long array[] = this.getArray();
-        num = new long[array.length + 1];
+    div_qr divide(int b) {
+        // ArrayListの最後の要素＝前回の計算の商
+        // 最後の要素に余りを入れて
+        // 商の要素を追加する
+        int last = num.size() - 1;
+        int a = num.get(last);
 
-        // 配列を拡張
-        System.arraycopy(array, 1, num, 2, array.length - 1);
+        num.set(last, a % b);
+        num.add(a / b);
 
-        // 元の配列の最初の要素を割って、商と余りを新しい配列の最初と２番目の要素に入れる
-        num[0] = array[0] / b;
-        num[1] = array[0] % b;
         return this;
     }
 
     // 配列を返す
-    long[] getArray() {
-        return num;
+    int[] getArray() {
+        // numを逆順にする
+        int size = num.size();
+        int[] num2 = new int[num.size()];
+
+        for (int idx = 0; idx < size; idx++) {
+            num2[idx] = num.get(size - idx - 1);
+        }
+        return num2;
     }
 }
-
